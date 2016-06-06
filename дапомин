@@ -1,0 +1,370 @@
+
+---ДАПАМИН
+
+
+use i_collect
+
+declare @d1 date = '01-05-2016'
+declare @d2 date = getdate()
+
+SELECT
+
+	 b.name 'Банк'
+	,p.name 'Портфель'
+	,dpMin.name 'Отдел'
+	,dpMin.fio 'Оператор'
+	,d.id 'ID долга'
+	,dpMin.dt 'Дата регистрации первого обещания'
+	,dpMin.prom_date 'Дата обещанного платежа по первому обещанию'
+	,isnull(sum(dpMin.prom_sum),'') 'Сумма первого обещанного платежа'
+	,isnull(sum(dp.kolvo_obeshaniy),'') 'Кол-во обещаний' --узнать за какой период???
+	,dpMin.debt_sum 'Сумма остатка на дату регистрации первого обещания'
+
+	--,dbbl.debt_sum 'Сумма остатка долга на контрольную дату' --переделать по критериям в таблице
+
+	,iif(d.status not in (6,7,8,10), dpMin.debt_sum2, dl.debt_sum) 'Сумма остатка долга на контрольную дату'
+
+	,iif(d.status not in (6,7,8,10), dateadd(month, 1, dpMin.dt), dsl.dt) 'Контрольная дата'
+	,iif(dpMin.fio != wt.fio, 0, 1) 'Флаг соответствия закрепления за тем же сотрудником'
+	,isnull(sum(cc.PP_sum),'') 'Сумма поступивших платежей за контрольный период'
+	
+FROM
+	bank as b
+	inner join portfolio as p on b.id = p.parent_id
+	inner join debt as d on p.id = d.r_portfolio_id
+	inner join person as per on d.parent_id=per.id
+
+
+	outer apply /*1stPromDate*/
+			(
+			select
+				dpMin.parent_id
+				,dpMin.dt
+				,dpMin.prom_date
+				,dpMin.prom_sum
+				,dbl.debt_sum
+				,u.fio
+				,u.name
+				,dbl2.debt_sum debt_sum2
+				
+			from
+				debt_promise dpMin
+				
+				left join --OperatorOtdel
+						(
+						select
+							u.id
+							,u.f+' '+u.i+' '+u.o fio
+							,d.name
+							
+						from
+							users u
+							left join department d on u.r_department_id = d.dep
+									
+						)u
+							on u.id = dpMin.r_user_id
+
+
+				outer apply --BalanceLog
+						(
+						select
+							dbl.parent_id
+							,dbl.debt_sum
+						from
+							debt_balance_log dbl
+						where
+							dbl.parent_id = dpMin.parent_id
+							and dbl.dt < dpMin.dt
+							and dbl.id in
+									(
+									select
+										max(id)
+									from
+										debt_balance_log
+									group by
+										parent_id
+									)	
+						group by
+							dbl.parent_id
+							,dbl.debt_sum
+						)dbl
+			/*
+		{
+			*/
+				outer apply --BalanceLog + 1 month after reg 1st Prom
+						(
+						select
+							dbl2.parent_id
+							,dbl2.debt_sum
+						from
+							debt_balance_log dbl2
+							outer apply
+									(
+									select
+										dssl.parent_id
+										,dssl.status
+									from
+										debt_status_log dssl
+									where
+										dssl.parent_id = dbl2.parent_id
+										and dssl.id in
+													(
+													select
+														max(id)
+													from
+														debt_status_log
+													where
+														dt < dateadd(month,1, dpMin.dt)
+													)
+									)dssl
+
+						where
+							dbl.parent_id = dpMin.parent_id
+							and dbl2.dt < dateadd(month, 1, dpMin.dt)
+							and dssl.status not in (6,7,8,10)
+							and dbl2.id in
+									(
+									select
+										max(id)
+									from
+										debt_balance_log
+									group by
+										parent_id
+									)						
+						group by
+							dbl2.parent_id
+							,dbl2.debt_sum
+						)dbl2
+
+			/*
+		}
+			*/
+
+
+
+
+			where
+				dpMin.parent_id = d.id
+				and dpMin.id in
+						(
+						select
+							min(id)
+						from
+							debt_promise
+						group by
+							parent_id
+						)
+					and dpMin.prom_date > @d1
+			
+			)dpMin
+
+	
+
+	outer apply /*prom's*/
+			(
+			select dp.parent_id,
+				sum(dp2.summa_obeshaniy) as summa_obeshaniy,
+				sum(dp2.kolvo_obeshaniy) as kolvo_obeshaniy
+			from
+				debt_promise as dp
+				left join
+						(select
+							dp2.id as id,
+							(case when (dp2.prom_sum is not null) then dp2.prom_sum else 0 end) as summa_obeshaniy,
+							(case when (dp2.prom_sum is not null) then 1 else 0	end) as kolvo_obeshaniy
+						from
+							debt_promise as dp2
+						group by
+							dp2.id
+							,dp2.prom_sum
+							,dp2.dt
+
+						)dp2 on dp2.id=dp.id
+
+			where
+				d.id = dp.parent_id
+				and dp.dt between @d1 and @d2
+			group by
+				dp.parent_id
+			)dp
+
+
+	outer apply /*BalanceOt@d1*/
+			(
+			select
+				dbbl.parent_id
+				,dbbl.debt_sum
+			from
+				debt_balance_log dbbl
+			where
+				dbbl.id in
+						(
+						select
+							max(id)
+						from
+							debt_balance_log
+						group by
+							parent_id
+						)
+				and dbbl.dt < @d1
+				and dbbl.parent_id = d.id
+
+			group by
+				dbbl.parent_id
+				,dbbl.debt_sum
+
+			)dbbl
+
+
+--users
+	left join 
+			(
+				select
+					wt.r_debt_id
+					,u.f+' '+u.i+' '+u.o fio
+				from
+					work_task_log as wt
+					left join users as u on wt.r_user_id = u.id
+				where
+					wt.id in 
+
+							(
+								select
+									max(id)
+								from
+									work_task_log
+								group by
+									r_debt_id
+							)
+
+			)wt 	on d.id = wt.r_debt_id
+
+
+--calc summ
+	outer apply
+			(
+			select 
+				dc.parent_id
+				,sum(dc2.PP_sum) PP_sum
+				,sum(dc2.PP_kolvo) PP_kolvo
+			from 
+				debt_calc dc
+				left join 
+						(
+						select 
+							dc2.id as id
+							,(case 
+								when (dc2.int_sum is not null and dc2.is_confirmed = 1 and dc2.is_cancel = 0)
+								then dc2.int_sum else 0
+							end) as PP_sum
+							,(case 
+								when (dc2.int_sum is not null and dc2.is_confirmed = 1 and dc2.is_cancel = 0)
+								then 1	else 0 
+							end) as PP_kolvo
+						from 
+							debt_calc dc2
+						group by 
+							dc2.id
+							,dc2.is_confirmed
+							,dc2.int_sum
+							,dc2.is_cancel
+						)dc2
+							on dc2.id=dc.id
+					
+			where 
+				dc.calc_date between @d1 and @d2	
+				and dc.parent_id = d.id						
+			group by 
+				dc.parent_id
+			)cc	
+
+
+	left join --statusLog
+			(
+			select
+				dsl.parent_id
+				,dsl.dt
+			from
+				 debt_status_log dsl
+			where
+				dsl.id in
+						(
+						select
+							max(id)
+						from
+							debt_status_log
+						where
+							status in (6,7,8,10)
+						group by
+							parent_id
+						)
+
+			group by
+				dsl.parent_id
+				,dsl.dt
+			)dsl
+				on dsl.parent_id = d.id
+
+	outer apply --DebtSum of Max Debt Activity
+			(
+			select
+				dl.parent_id
+				,dl.debt_sum
+			from
+				debt_balance_log dl
+				outer apply
+						(
+						select
+							l.parent_id
+							,l.dt
+						from
+							debt_status_log l
+						where
+							l.parent_id = dl.parent_id
+							and l.status in (6,7,8,10)
+							and l.id in
+										(
+										select
+											max(id)
+										from
+											debt_status_log
+										group by
+											parent_id
+										)
+						group by
+							l.parent_id
+							,l.dt
+						)l
+							
+
+			where
+				dl.parent_id = d.id
+				and dl.id in
+							(
+							select
+								max(id)
+							from
+								debt_balance_log
+							where
+								dt < l.dt
+							group by
+								parent_id
+							)
+			)dl
+
+
+group by
+	b.name
+	,p.name
+	,dpMin.name
+	,dpMin.fio
+	,d.id
+	,dpMin.dt
+	,dpMin.prom_date
+	,dpMin.debt_sum
+	,dbbl.debt_sum
+	,d.status
+	,dsl.dt
+	,wt.fio
+	,dpMin.debt_sum2
+	,dl.debt_sum

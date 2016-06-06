@@ -1,0 +1,197 @@
+--calc && prom date
+declare @d1 date
+set @d1 = '01-09-2015'
+declare @d2 date
+set @d2 = '17-09-2015'
+ 
+select 
+
+	
+	d.id as id,
+	isnull(sum(dbl.debt_sum),0) as 'Сумма долга',
+	isnull(sum(dp.kolvo_obeshaniy),0) as 'V обещаний',
+	isnull(sum(dp.summa_obeshaniy),0) as 'E обещаний',
+	isnull(sum(dc.PP_kolvo),0) as 'V оплат',
+	isnull(sum(dc.PP_sum),0) as 'E оплат',
+	isnull(sum(c.vhod_zvon),0) as 'Вх.звонки',
+	p.name as 'Портфель',
+	isnull(di.name,'пусто') as 'Тип продукта',
+	isnull(wt.fio,'пусто') as 'Оператор',
+	(case
+		when dbl.debt_sum < 1000
+		then 'до 1 тр'
+
+		when dbl.debt_sum between 1000 and 50000
+		then '1-50 тр'
+
+		when dbl.debt_sum between 50001 and 100000
+		then '50-100 тр'
+
+		when dbl.debt_sum between 100001 and 300000
+		then '100-300 тр'
+
+		when dbl.debt_sum > 300001
+		then '300+ тр'
+
+		else 'n/a'
+	end) as 'Диапазон суммы долга',
+	isnull(d.city_name,'пусто') as 'Город'
+
+from
+	[i_collect].[dbo].[bank] as b
+	inner join [i_collect].[dbo].[portfolio] as p on b.id = p.parent_id
+	inner join [i_collect].[dbo].[debt] as d on p.id = d.r_portfolio_id
+
+--dict
+	left join (select
+					di.code,
+					di.name
+				from
+					[i_collect].[dbo].[dict] as di
+				where
+					di.parent_id = 11
+				) di on d.typ = di.code
+
+
+--compare
+	left join (select
+					dbl.parent_id,
+					dbl.debt_sum
+				from
+					[i_collect].[dbo].[debt_balance_log] as dbl
+				where
+					dbl.id in
+							(select
+								max(d.id)
+							from
+								[i_collect].[dbo].[debt_balance_log] as d
+							where
+								d.dt < @d2
+							group by
+								d.parent_id
+							)
+				) dbl on d.id = dbl.parent_id
+				 
+				 
+--входящие
+	left join (select
+					cl.r_debt_id,
+					sum(case
+							when (cl.typ = 3)
+							then 1
+							else 0
+						end) as vhod_zvon
+					
+				from
+					[i_collect].[dbo].[contact_log] as cl
+				where
+					cl.reg_dt between @d1 and @d2
+				group by
+					cl.r_debt_id
+				) as c on d.id = c.r_debt_id
+
+
+--calc
+	left join (select dc.parent_id,
+				dc.id,
+				sum(dc2.PP_sum) as PP_sum,
+				sum(dc2.PP_kolvo) as PP_kolvo
+
+				from
+					[i_collect].[dbo].[debt_calc] as dc
+					left join
+
+							(select dc2.id as id,
+								(case
+									when (dc2.int_sum is not null and dc2.is_confirmed='1')
+									then dc2.int_sum
+									else 0
+								end) as PP_sum,
+
+								(case 
+									when (dc2.int_sum is not null and dc2.is_confirmed='1')
+									then 1
+									else 0
+								end) as PP_kolvo
+							
+							from
+								[i_collect].[dbo].[debt_calc] as dc2
+							group by
+								dc2.id,
+								dc2.is_confirmed,
+								dc2.int_sum,
+								dc2.calc_date
+							) dc2 on dc2.id=dc.id
+
+				where
+					dc.calc_date between @d1 and @d2
+				group by dc.parent_id, dc.id
+				) dc on dc.parent_id = d.id
+
+
+--promise
+	left join (select
+					dp.parent_id,
+					sum(dp2.summa_obeshaniy) as summa_obeshaniy,
+					sum(dp2.kolvo_obeshaniy) as kolvo_obeshaniy
+				from
+					[i_collect].[dbo].[debt_promise] as dp
+					left join
+							(select dp2.id as id,
+
+								(case
+									when (dp2.prom_sum is not null)
+									then dp2.prom_sum
+									else 0
+								end) as summa_obeshaniy,
+
+								(case
+									when (dp2.prom_sum is not null)
+									then 1
+									else 0
+								end) as kolvo_obeshaniy
+
+							from
+								[i_collect].[dbo].[debt_promise] as dp2
+							group by
+								dp2.id,
+								dp2.prom_sum,
+								dp2.dt
+							) dp2 on dp2.id=dp.id
+
+				where
+					dp.dt between @d1 and @d2
+				group by
+					dp.parent_id
+
+				) dp on d.id = dp.parent_id
+
+--users
+	left join (select
+					wt.r_debt_id,
+					u.f+' '+u.i+' '+u.o as fio
+				from 
+					[i_collect].[dbo].[work_task_log] as wt
+					left join [i_collect].[dbo].[users] as u on wt.r_user_id = u.id
+				where
+					wt.id in (select
+									max(id)
+								from
+									[i_collect].[dbo].[work_task_log]
+								group by
+									r_debt_id
+								)
+				group by
+					wt.r_debt_id,
+					u.f+' '+u.i+' '+u.o
+				) wt on wt.r_debt_id = d.id
+
+
+group by
+	d.id,
+	d.typ,
+	wt.fio,
+	p.name,
+	di.name,
+	dbl.debt_sum,
+	d.city_name
