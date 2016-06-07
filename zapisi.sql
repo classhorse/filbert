@@ -75,6 +75,9 @@ Table_5471183067 avto_voice
 Table_5197538416 Автовзыскание_1
 Table_5197538447 Автовзыскание_2
 
+select * from  [INFINITY].[Cx_Work].[public].[Table_5036788937]
+
+
 
 	--пейджинг
 	select 
