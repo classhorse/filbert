@@ -5,6 +5,9 @@
 http://vkontakte.doguran.ru/kak-pisat-simvolami.php
 http://vkontakte.doguran.ru/perecherknutyj-tekst-vkontakte.php -- ̶в̶о̶т̶ ̶т̶а̶к̶
 
+--pypyODBC
+http://snakeproject.ru/rubric/article.php?art=python_pyodbc --doka
+
 --пароль от актов
 202321
 
