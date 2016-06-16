@@ -57,8 +57,7 @@ BEGIN
 					)cl on cl.r_debt_id = d.id
 		order by
 			cl.dt asc		
-			;delete from 
-			[INFINITY2].[Cx_Work].[public].[Table_5000081023]
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 		where
 			 [ID] in
 						(
@@ -195,6 +194,14 @@ BEGIN
 					p.typ = 3
 
 			)
+		;delete from 
+			[INFINITY2].[Cx_Work].[public].[Table_5000081023]
+		where 
+			[Телефон1] is null
+			and [Телефон2] is null
+			and [Телефон3] is null
+			and [Телефон4] is null
+			and [Телефон5] is null
 		end
 		
 --------------------------------------------------------------------
@@ -602,6 +609,24 @@ BEGIN
 							p.typ = 3
 
 					)
+			;delete from 
+				[INFINITY2].[Cx_Work].[public].[Table_5000081044]
+			where 
+				[Телефон1] is null
+				and [Телефон2] is null
+				and [Телефон3] is null
+				and [Телефон4] is null
+				and [Телефон5] is null
+				and [Телефон6] is null
+				and [Телефон7] is null
+				and [Телефон8] is null
+				and [Телефон9] is null
+				and [Телефон10] is null
+				and [Телефон11] is null
+				and [Телефон12] is null
+				and [Телефон13] is null
+				and [Телефон14] is null
+				and [Телефон15] is null
 		end
 		
 ----------------------------------------------------------------------
@@ -1008,6 +1033,24 @@ BEGIN
 								p.typ = 3
 
 						)
+			;delete from 
+				[INFINITY2].[Cx_Work].[public].[Table_5015640658]
+			where 
+				[Телефон1] is null
+				and [Телефон2] is null
+				and [Телефон3] is null
+				and [Телефон4] is null
+				and [Телефон5] is null
+				and [Телефон6] is null
+				and [Телефон7] is null
+				and [Телефон8] is null
+				and [Телефон9] is null
+				and [Телефон10] is null
+				and [Телефон11] is null
+				and [Телефон12] is null
+				and [Телефон13] is null
+				and [Телефон14] is null
+				and [Телефон15] is null
 		end
 
 ----------------------------------------------------------------------
@@ -1413,6 +1456,24 @@ BEGIN
 								p.typ = 3
 
 						)
+			;delete from 
+				[INFINITY2].[Cx_Work].[public].[Table_5042218921]
+			where 
+				[Телефон1] is null
+				and [Телефон2] is null
+				and [Телефон3] is null
+				and [Телефон4] is null
+				and [Телефон5] is null
+				and [Телефон6] is null
+				and [Телефон7] is null
+				and [Телефон8] is null
+				and [Телефон9] is null
+				and [Телефон10] is null
+				and [Телефон11] is null
+				and [Телефон12] is null
+				and [Телефон13] is null
+				and [Телефон14] is null
+				and [Телефон15] is null
 		end
 		
 ----------------------------------------------------------------------
@@ -1818,6 +1879,24 @@ BEGIN
 								p.typ = 3
 
 						)
+			;delete from 
+				[INFINITY2].[Cx_Work].[public].[Table_5064249944]
+			where 
+				[Телефон1] is null
+				and [Телефон2] is null
+				and [Телефон3] is null
+				and [Телефон4] is null
+				and [Телефон5] is null
+				and [Телефон6] is null
+				and [Телефон7] is null
+				and [Телефон8] is null
+				and [Телефон9] is null
+				and [Телефон10] is null
+				and [Телефон11] is null
+				and [Телефон12] is null
+				and [Телефон13] is null
+				and [Телефон14] is null
+				and [Телефон15] is null
 		end
 ----------------------------------------------------------------------
 	else if @n = 7
@@ -2222,6 +2301,24 @@ BEGIN
 								p.typ = 3
 
 						)
+			;delete from 
+				[INFINITY2].[Cx_Work].[public].[Table_5068758013]
+			where 
+				[Телефон1] is null
+				and [Телефон2] is null
+				and [Телефон3] is null
+				and [Телефон4] is null
+				and [Телефон5] is null
+				and [Телефон6] is null
+				and [Телефон7] is null
+				and [Телефон8] is null
+				and [Телефон9] is null
+				and [Телефон10] is null
+				and [Телефон11] is null
+				and [Телефон12] is null
+				and [Телефон13] is null
+				and [Телефон14] is null
+				and [Телефон15] is null
 		end
 		
 ----------------------------------------------------------------------
@@ -2628,6 +2725,24 @@ BEGIN
 								p.typ = 3
 
 						)
+			;delete from 
+				[INFINITY2].[Cx_Work].[public].[Table_5336960870]
+			where 
+				[Телефон1] is null
+				and [Телефон2] is null
+				and [Телефон3] is null
+				and [Телефон4] is null
+				and [Телефон5] is null
+				and [Телефон6] is null
+				and [Телефон7] is null
+				and [Телефон8] is null
+				and [Телефон9] is null
+				and [Телефон10] is null
+				and [Телефон11] is null
+				and [Телефон12] is null
+				and [Телефон13] is null
+				and [Телефон14] is null
+				and [Телефон15] is null
 		end
 		
 ----------------------------------------------------------------------
