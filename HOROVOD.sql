@@ -605,6 +605,7 @@ BEGIN
 		end
 		
 ----------------------------------------------------------------------
+
 	else if @n = 3
 		begin
 			select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
@@ -2633,4 +2634,3 @@ BEGIN
 
 END
 GO
-
