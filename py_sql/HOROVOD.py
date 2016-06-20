@@ -19,43 +19,42 @@ print ('''
 # name = str(input(u'Как тебя зовут? '))
 # print ('Привет '+name + '!')
 
-def horovod_1():
+def Horovod(number):
     global con_str
     global con
     cur = con.cursor()
     sql = '''
-    use msdb
-    EXEC dbo.sp_add_job @job_name = N'HOROVOD'
+      use msdb
+      EXEC dbo.sp_add_job @job_name = N'HOROVOD__N__';
+      declare @tt int = cast(replace(convert(varchar, dateadd(minute, 1, getdate()), 108), ':', '') as int);
 
-    declare @tt int = cast(replace(convert(varchar, dateadd(minute, 1, getdate()), 108), ':', '') as int)
+      EXEC sp_add_jobstep
+      @job_name = N'HOROVOD__N__',
+      @step_name = N'HOROVOD__N__',
+      @database_name = N'i_collect',
+      @subsystem = N'TSQL',
+      @command = N'exec Filbert_HOROVOD N__ ',
+      @retry_attempts = 0,
+      @retry_interval = 0
 
+      ;EXEC dbo.sp_add_schedule
+      @schedule_name = N'HOROVOD__N__',
+      @freq_type = 1,
+      @active_start_time = @tt ;
+      USE msdb
 
-    EXEC sp_add_jobstep
-    @job_name = N'Horovod_1',
-    @step_name = N'Horovod_1',
-    @database_name = N'i_collect',
-    @subsystem = N'TSQL',
-    @command = N'exec Filbert_HOROVOD 3',
-    @retry_attempts = 0,
-    @retry_interval = 0 ;
+      ;EXEC sp_attach_schedule
+      @job_name = N'HOROVOD__N__',
+      @schedule_name = N'HOROVOD__N__'
 
-    EXEC dbo.sp_add_schedule
-    @schedule_name = N'Ave_Satan',
-    @freq_type = 1,
-    @active_start_time = @tt ;
-    USE msdb ;
+      ;EXEC dbo.sp_add_jobserver
+      @job_name = N'HOROVOD__N__';'''
 
-    EXEC sp_attach_schedule
-    @job_name = N'Ave_Satan',
-    @schedule_name = N'Ave_Satan';
-
-    EXEC dbo.sp_add_jobserver
-    @job_name = N'Ave_Satan';'''
-
-    cur.execute(sql)
+    cur.execute(sql.replace('N__', number))
     cur.commit()
     cur.close()
     con.close()
+
 
 while True:
     ask = int(input('''
@@ -79,21 +78,37 @@ while True:
 Номер кампании: '''))
 
         if ask_1 == 1:
-            pass
+            print 'Начинаю рефакторинг..'
+            Horovod('1')
+            print 'Готово!'
         elif ask_1 == 2:
-            pass
+            print 'Начинаю рефакторинг..'
+            Horovod('2')
+            print 'Готово!'
         elif ask_1 == 3:
-            pass
+            print 'Начинаю рефакторинг..'
+            Horovod('3')
+            print 'Готово!'
         elif ask_1 == 4:
-            pass
+            print 'Начинаю рефакторинг..'
+            Horovod('4')
+            print 'Готово!'
         elif ask_1 == 5:
-            pass
+            print 'Начинаю рефакторинг..'
+            Horovod('5')
+            print 'Готово!'
         elif ask_1 == 6:
-            pass
+            print 'Начинаю рефакторинг..'
+            Horovod('6')
+            print 'Готово!'
         elif ask_1 == 7:
-            pass
+            print 'Начинаю рефакторинг..'
+            Horovod('7')
+            print 'Готово!'
         elif ask_1 == 8:
-            pass
+            print 'Начинаю рефакторинг..'
+            Horovod('8')
+            print 'Готово!'
         else:
             'А вот нет у нас такой кампании ¯\_(ツ)_/¯'
 
@@ -113,19 +128,29 @@ while True:
             ask_2_1 = int(input('''
 Вот что я могу сделать с первой кампанией:
 
-1 - Сортировать ее по дате   3 - Удалить закрепленные дела за коллегами
-2 - Удалить закрытые дела    4 - Удалить рабочие номера телефонов
+1 - Сортировать ее по дате последнего звонка
+2 - Удалить закрытые дела
+3 - Удалить закрепленные дела за коллегами
+4 - Удалить рабочие номера телефонов
 
 Введи номер задачи:   '''))
 
             if ask_2_1 == 1:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('11')
+                print 'Готово!'
             elif ask_2_1 == 2:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('12')
+                print 'Готово!'
             elif ask_2_1 == 3:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('13')
+                print 'Готово!'
             elif ask_2_1 == 4:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('14')
+                print 'Готово!'
             else:
                 print 'А вот нет у меня такой задачи (◕‿◕)'
 
@@ -133,126 +158,196 @@ while True:
             ask_2_2 = int(input(''':
 Вот что я могу сделать со второй кампанией
 
-1 - Сортировать ее по дате   3 - Удалить закрепленные дела за коллегами
-2 - Удалить закрытые дела    4 - Удалить рабочие номера телефонов
+1 - Сортировать ее по дате последнего звонка
+2 - Удалить закрытые дела
+3 - Удалить закрепленные дела за коллегами
+4 - Удалить рабочие номера телефонов
 
 Введи номер задачи:   '''))
             if ask_2_2 == 1:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('21')
+                print 'Готово!'
             elif ask_2_2 == 2:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('22')
+                print 'Готово!'
             elif ask_2_2 == 3:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('23')
+                print 'Готово!'
             elif ask_2_2 == 4:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('24')
+                print 'Готово!'
             else:
                 print 'А вот нет у меня такой задачи (✿◠‿◠) '
 
         elif ask_2 == 3:
             ask_2_3 = int(input('''
 Что нужно сделать с третьей кампанией?:
-1 - Сортировать ее по дате   3 - Удалить закрепленные дела за коллегами
-2 - Удалить закрытые дела    4 - Удалить рабочие номера телефонов
+1 - Сортировать ее по дате последнего звронка
+2 - Удалить закрытые дела
+3 - Удалить закрепленные дела за коллегами
+4 - Удалить рабочие номера телефонов
 
 Введи номер задачи:   '''))
             if ask_2_3 == 1:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('31')
+                print 'Готово!'
             elif ask_2_3 == 2:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('32')
+                print 'Готово!'
             elif ask_2_3 == 3:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('33')
+                print 'Готово!'
             elif ask_2_3 == 4:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('34')
+                print 'Готово!'
             else:
                 print 'А вот нет у меня такой задачи |◔◡◉|'
 
         elif ask_2 == 4:
             ask_2_4 = int(input('''
 Что нужно сделать с четвертой кампанией?:
-1 - Сортировать ее по дате   3 - Удалить закрепленные дела за коллегами
-2 - Удалить закрытые дела    4 - Удалить рабочие номера телефонов
+1 - Сортировать ее по дате последнего звронка
+2 - Удалить закрытые дела
+3 - Удалить закрепленные дела за коллегами
+4 - Удалить рабочие номера телефонов
 
 Введи номер задачи:   '''))
             if ask_2_4 == 1:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('41')
+                print 'Готово!'
             elif ask_2_4 == 2:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('42')
+                print 'Готово!'
             elif ask_2_4 == 3:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('43')
+                print 'Готово!'
             elif ask_2_4 == 4:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('44')
+                print 'Готово!'
             else:
                 print 'А вот нет у меня такой задачи ◉◡◉'
 
         elif ask_2 == 5:
             ask_2_5 = int(input('''
 Что нужно сделать с пятой кампанией?:
-1 - Сортировать ее по дате   3 - Удалить закрепленные дела за коллегами
-2 - Удалить закрытые дела    4 - Удалить рабочие номера телефонов
+1 - Сортировать ее по дате последнего звронка
+2 - Удалить закрытые дела
+3 - Удалить закрепленные дела за коллегами
+4 - Удалить рабочие номера телефонов
 
 Введи номер задачи:   '''))
             if ask_2_5 == 1:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('51')
+                print 'Готово!'
             elif ask_2_5 == 2:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('52')
+                print 'Готово!'
             elif ask_2_5 == 3:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('53')
+                print 'Готово!'
             elif ask_2_5 == 4:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('54')
+                print 'Готово!'
             else:
                 print 'А вот нет у меня такой задачи (✿｡✿)'
 
         elif ask_2 == 6:
             ask_2_6 = int(input('''
 Что нужно сделать с шестой кампанией?:
-1 - Сортировать ее по дате   3 - Удалить закрепленные дела за коллегами
-2 - Удалить закрытые дела    4 - Удалить рабочие номера телефонов
+1 - Сортировать ее по дате последнего звронка
+2 - Удалить закрытые дела
+3 - Удалить закрепленные дела за коллегами
+4 - Удалить рабочие номера телефонов
 
 Введи номер задачи:   '''))
             if ask_2_6 == 1:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('61')
+                print 'Готово!'
             elif ask_2_6 == 2:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('62')
+                print 'Готово!'
             elif ask_2_6 == 3:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('63')
+                print 'Готово!'
             elif ask_2_6 == 4:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('64')
+                print 'Готово!'
             else:
                 print 'А вот нет у меня такой задачи (ᵔᴥᵔ)'
 
         elif ask_2 == 7:
             ask_2_7 = int(input('''
 Что нужно сделать с седьмой кампанией?:
-1 - Сортировать ее по дате   3 - Удалить закрепленные дела за коллегами
-2 - Удалить закрытые дела    4 - Удалить рабочие номера телефонов
+1 - Сортировать ее по дате последнего звронка
+2 - Удалить закрытые дела
+3 - Удалить закрепленные дела за коллегами
+4 - Удалить рабочие номера телефонов
 
 Введи номер задачи:   '''))
             if ask_2_7 == 1:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('71')
+                print 'Готово!'
             elif ask_2_7 == 2:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('72')
+                print 'Готово!'
             elif ask_2_7 == 3:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('73')
+                print 'Готово!'
             elif ask_2_7 == 4:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('74')
+                print 'Готово!'
             else:
                 print 'А вот нет у меня такой задачи ( ͡° ͜ʖ ͡°)'
 
         elif ask_2 == 8:
             ask_2_8 = int(input('''
 Что нужно сделать с восьмой кампанией?:
-1 - Сортировать ее по дате   3 - Удалить закрепленные дела за коллегами
-2 - Удалить закрытые дела    4 - Удалить рабочие номера телефонов
+1 - Сортировать ее по дате последнего звронка
+2 - Удалить закрытые дела
+3 - Удалить закрепленные дела за коллегами
+4 - Удалить рабочие номера телефонов
 
 Введи номер задачи:   '''))
             if ask_2_8 == 1:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('81')
+                print 'Готово!'
             elif ask_2_8 == 2:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('82')
+                print 'Готово!'
             elif ask_2_8 == 3:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('83')
+                print 'Готово!'
             elif ask_2_8 == 4:
-                pass
+                print 'Начинаю рефакторинг..'
+                Horovod('84')
+                print 'Готово!'
             else:
                 print 'А вот нет у меня такой задачи (づ｡◕‿‿◕｡)づ '
 
