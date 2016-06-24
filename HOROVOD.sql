@@ -1,6 +1,5 @@
 
-
-alter procedure Filbert_HOROVOD (@n int)
+create procedure Filbert_HOROVOD (@n int)
 AS
 BEGIN
 
@@ -205,6 +204,19 @@ BEGIN
 			and [Телефон3] is null
 			and [Телефон4] is null
 			and [Телефон5] is null
+		;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)
 		end
 
 --------------------------------
@@ -434,6 +446,25 @@ BEGIN
 				and [Телефон5] is null
 
 		end
+
+	else if @n = 15 --удаляем долги с обещаниями
+		begin
+			delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)
+
+		end
+		
 	
 --</district_1>
 ----------------------------------------------------------------------
@@ -849,6 +880,19 @@ BEGIN
 				and [Телефон13] is null
 				and [Телефон14] is null
 				and [Телефон15] is null
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)
 		end
 
 	else if @n = 21 --сортировка
@@ -1285,6 +1329,24 @@ BEGIN
 				and [Телефон15] is null
 
 		end
+
+	else if @n = 25 --удаляем долги с обещаниями
+		begin
+			delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)
+
+		end
 	
 --</district_2>
 ----------------------------------------------------------------------
@@ -1697,6 +1759,19 @@ BEGIN
 					and [Телефон13] is null
 					and [Телефон14] is null
 					and [Телефон15] is null
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)
 		end
 
 	else if @n = 31 --сортировка
@@ -2132,6 +2207,24 @@ BEGIN
 
 		end
 
+	else if @n = 35 --удаляем долги с обещаниями
+		begin
+			delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)
+		
+		end
+
 --</district_3>
 ----------------------------------------------------------------------
 --<district_4>
@@ -2543,6 +2636,19 @@ BEGIN
 				and [Телефон13] is null
 				and [Телефон14] is null
 				and [Телефон15] is null
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)		
 		end
 
 	else if @n = 41 --сортировка
@@ -2977,6 +3083,23 @@ BEGIN
 				and [Телефон15] is null
 
 		end
+
+	else if @n = 45 --удаляем долги с обещаниями
+		begin
+			delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)		
+		end
 	
 --</district_4>
 ----------------------------------------------------------------------
@@ -3389,6 +3512,19 @@ BEGIN
 				and [Телефон13] is null
 				and [Телефон14] is null
 				and [Телефон15] is null
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)		
 		end
 
 
@@ -3824,6 +3960,23 @@ BEGIN
 				and [Телефон15] is null
 
 		end
+
+	else if @n = 55 --удаляем долги с обещаниями
+		begin
+			delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)		
+		end
 	
 --</district_5>
 ----------------------------------------------------------------------
@@ -4236,6 +4389,19 @@ BEGIN
 				and [Телефон13] is null
 				and [Телефон14] is null
 				and [Телефон15] is null
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)	
 		end
 
 
@@ -4671,6 +4837,23 @@ BEGIN
 				and [Телефон15] is null
 
 		end
+
+	else if @n = 65 -- удаляем долги с обещаниями
+		begin
+			delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+						)	
+		end
 	
 --</district_6>
 ----------------------------------------------------------------------
@@ -5083,6 +5266,20 @@ BEGIN
 				and [Телефон13] is null
 				and [Телефон14] is null
 				and [Телефон15] is null
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+
+						)
 		end
 		
 	else if @n = 71 --сортировка
@@ -5517,6 +5714,25 @@ BEGIN
 				and [Телефон15] is null
 
 		end
+
+	else if @n = 75 --удаляем долги с обещаниями
+		begin
+			delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+
+						)
+		end
+			
 --</district_7>
 ----------------------------------------------------------------------
 --<district_8>
@@ -5929,6 +6145,21 @@ BEGIN
 				and [Телефон13] is null
 				and [Телефон14] is null
 				and [Телефон15] is null
+
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+
+						)
 		end
 		
 
@@ -6364,11 +6595,28 @@ BEGIN
 				and [Телефон15] is null
 
 		end
+
+	else if @n = 85 --удаляем долги с обещаниями
+		begin
+			delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
+			where
+				[ID] in
+						(
+						select
+							dp.parent_id
+						from
+							i_collect.dbo.debt_promise dp
+						where
+							dp.prom_date > getdate()
+						group by
+							dp.parent_id
+
+						)
+		end
+			
 --</district_8>
 ----------------------------------------------------------------------
 
 END
 GO
-
-
 
