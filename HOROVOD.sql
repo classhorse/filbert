@@ -1,5 +1,5 @@
 
-create procedure Filbert_HOROVOD (@n int)
+alter procedure Filbert_HOROVOD (@n int)
 AS
 BEGIN
 
@@ -9,8 +9,8 @@ BEGIN
 		begin
 		if OBJECT_ID (N'tmp_campaign_1') is not null
 			drop table tmp_campaign_1
-		else
-			select * into tmp_campaign_1 from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+		
+			;select * into tmp_campaign_1 from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 			(
@@ -223,10 +223,9 @@ BEGIN
 	else if @n = 11 --сортировка
 		begin
 			if OBJECT_ID (N'tmp_campaign_1') is not null
-				drop table tmp_campaign_1
-			else
-				select * into tmp_campaign_1 
-				from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+			drop table tmp_campaign_1
+			
+				;select * into tmp_campaign_1 from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 
 			--<вставляем отсортированные данные>
@@ -468,13 +467,14 @@ BEGIN
 	
 --</district_1>
 ----------------------------------------------------------------------
+
 --<district_2>
 	else if @n = 2 --конъюнктура
 		begin
 		if OBJECT_ID (N'tmp_campaign_2') is not null
 			drop table tmp_campaign_2
-		else
-			select * into tmp_campaign_2 from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
+		
+			;select * into tmp_campaign_2 from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 			(
@@ -537,7 +537,8 @@ BEGIN
 					)cl on cl.r_debt_id = d.id
 		order by
 			cl.dt asc
-			;delete from 
+
+		;delete from 
 			[INFINITY2].[Cx_Work].[public].[Table_5000081044]
 		where
 			 [ID] in
@@ -899,9 +900,8 @@ BEGIN
 		begin
 			if OBJECT_ID (N'tmp_campaign_2') is not null
 				drop table tmp_campaign_2
-			else
-				select * into tmp_campaign_2 
-				from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
+			
+				;select * into tmp_campaign_2 from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 					(
@@ -1355,8 +1355,8 @@ BEGIN
 		begin
 		if OBJECT_ID (N'tmp_campaign_3') is not null
 			drop table tmp_campaign_3
-		else
-			select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
+		
+			;select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 				(
@@ -1778,8 +1778,8 @@ BEGIN
 		begin
 			if OBJECT_ID (N'tmp_campaign_3') is not null
 				drop table tmp_campaign_3
-			else
-				select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
+			
+				;select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 					(
@@ -2232,8 +2232,8 @@ BEGIN
 		begin
 		if OBJECT_ID (N'tmp_campaign_4') is not null
 			drop table tmp_campaign_4
-		else
-			select * into tmp_campaign_4 from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
+		
+			;select * into tmp_campaign_4 from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 				(
@@ -2655,8 +2655,8 @@ BEGIN
 		begin
 			if OBJECT_ID (N'tmp_campaign_4') is not null
 				drop table tmp_campaign_4
-			else
-				select * into tmp_campaign_4 from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
+			
+				;select * into tmp_campaign_4 from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 					(
@@ -3108,8 +3108,8 @@ BEGIN
 		begin
 		if OBJECT_ID (N'tmp_campaign_5') is not null
 			drop table tmp_campaign_5
-		else
-			select * into tmp_campaign_5 from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
+		
+			;select * into tmp_campaign_5 from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 				(
@@ -3532,8 +3532,8 @@ BEGIN
 		begin
 			if OBJECT_ID (N'tmp_campaign_5') is not null
 				drop table tmp_campaign_5
-			else
-				select * into tmp_campaign_5 from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
+			
+				;select * into tmp_campaign_5 from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 					(
@@ -3985,8 +3985,8 @@ BEGIN
 		begin
 		if OBJECT_ID (N'tmp_campaign_6') is not null
 			drop table tmp_campaign_6
-		else
-			select * into tmp_campaign_6 from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
+		
+			;select * into tmp_campaign_6 from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 				(
@@ -4409,8 +4409,8 @@ BEGIN
 		begin
 			if OBJECT_ID (N'tmp_campaign_6') is not null
 				drop table tmp_campaign_6
-			else
-				select * into tmp_campaign_6 from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
+			
+				;select * into tmp_campaign_6 from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 					(
@@ -4862,8 +4862,8 @@ BEGIN
 		begin
 		if OBJECT_ID (N'tmp_campaign_7') is not null
 			drop table tmp_campaign_7
-		else
-			select * into tmp_campaign_7 from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
+		
+			;select * into tmp_campaign_7 from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 				(
@@ -5286,8 +5286,8 @@ BEGIN
 		begin
 			if OBJECT_ID (N'tmp_campaign_7') is not null
 				drop table tmp_campaign_7
-			else
-				select * into tmp_campaign_7 from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
+			
+				;select * into tmp_campaign_7 from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 					(
@@ -5740,8 +5740,8 @@ BEGIN
 		begin
 		if OBJECT_ID (N'tmp_campaign_8') is not null
 			drop table tmp_campaign_8
-		else
-			select * into tmp_campaign_8 from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
+		
+			;select * into tmp_campaign_8 from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 				(
@@ -6167,8 +6167,8 @@ BEGIN
 		begin
 			if OBJECT_ID (N'tmp_campaign_8') is not null
 				drop table tmp_campaign_8
-			else
-				select * into tmp_campaign_8 from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
+			
+				;select * into tmp_campaign_8 from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 					(
