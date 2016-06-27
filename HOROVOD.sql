@@ -1,5 +1,5 @@
 
-alter procedure Filbert_HOROVOD (@n int)
+create procedure Filbert_HOROVOD (@n int)
 AS
 BEGIN
 
@@ -7,10 +7,7 @@ BEGIN
 --<district_1>
 	if @n = 1 --конъюнктура
 		begin
-		if OBJECT_ID (N'tmp_campaign_1') is not null
-			drop table tmp_campaign_1
-		
-			;select * into tmp_campaign_1 from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+			select * into tmp_campaign_1 from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 			(
@@ -62,41 +59,42 @@ BEGIN
 			
 					)cl on cl.r_debt_id = d.id
 		order by
-			cl.dt asc		
-			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
-		where
-			 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
-			or [ID] in
-						(
-						select
-							wt.r_debt_id
-						from
-							i_collect.dbo.work_task_log as wt
-							left join i_collect.dbo.users as u on wt.r_user_id = u.id
-						where
-							u.id not in (1604, -1)										
-							and wt.id in 
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.work_task_log
-									group by
-										r_debt_id
-									)
-						group by
-							wt.r_debt_id
-						)
+			cl.dt asc
+		;drop table tmp_campaign_1		
+		;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+			where
+				 [ID] in
+							(
+							select
+								d.id
+							from
+								i_collect.dbo.debt d
+							where
+								d.status in (6,7,8,10)
+							group by
+								d.id
+							)
+				or [ID] in
+							(
+							select
+								wt.r_debt_id
+							from
+								i_collect.dbo.work_task_log as wt
+								left join i_collect.dbo.users as u on wt.r_user_id = u.id
+							where
+								u.id not in (1604, -1)										
+								and wt.id in 
+										(
+										select
+											max(id)
+										from
+											i_collect.dbo.work_task_log
+										group by
+											r_debt_id
+										)
+							group by
+								wt.r_debt_id
+							)
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 				set [State] = null
 				where [State] is not null
@@ -222,70 +220,62 @@ BEGIN
 --------------------------------
 	else if @n = 11 --сортировка
 		begin
-			if OBJECT_ID (N'tmp_campaign_1') is not null
-			drop table tmp_campaign_1
-			
-				;select * into tmp_campaign_1 from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
-				;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+			select * into tmp_campaign_1 from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 
-			--<вставляем отсортированные данные>
-				;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081023]
-					(
-					[ID]
-					,[State]
-					,[ID_долга]
-					,[Банк]
-					,[Фамилия]
-					,[Имя]
-					,[Отчество]
-					,[Телефон1]
-					,[Телефон2]
-					,[Телефон3]
-					,[Телефон4]
-					,[Телефон5]
-					,[Остаток_долга]
-					,[Дата_перезвона]
-					,[Часовой_пояс]
-					,[Телефон_для_перезвона]
-					,[last_call_dt]
-					)						
-				select
-					tc1.*
-				from
-					tmp_campaign_1 tc1
-					left join
-							(
-							select
-								cl.r_debt_id
-								,cl.dt
-							from
-								i_collect.dbo.contact_log cl
-							where
-								cl.typ = 1
-								and cl.id in
-										(
-										select
-											max(id)
-										from
-											contact_log
-										group by
-											r_debt_id
-										)		
-							group by
-								cl.r_debt_id
-								,cl.dt
-							)cl on cl.r_debt_id = tc1.[ID]
-				order by
-					cl.dt asc		
-			--</вставляем отсортированные данные>
-
-			
-			--<очистка состояния>			
-				;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+		--<вставляем отсортированные данные>
+			;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081023]
+				(
+				[ID]
+				,[State]
+				,[ID_долга]
+				,[Банк]
+				,[Фамилия]
+				,[Имя]
+				,[Отчество]
+				,[Телефон1]
+				,[Телефон2]
+				,[Телефон3]
+				,[Телефон4]
+				,[Телефон5]
+				,[Остаток_долга]
+				,[Дата_перезвона]
+				,[Часовой_пояс]
+				,[Телефон_для_перезвона]
+				,[last_call_dt]
+				)						
+			select
+				tc1.*
+			from
+				tmp_campaign_1 tc1
+				left join
+						(
+						select
+							cl.r_debt_id
+							,cl.dt
+						from
+							i_collect.dbo.contact_log cl
+						where
+							cl.typ = 1
+							and cl.id in
+									(
+									select
+										max(id)
+									from
+										contact_log
+									group by
+										r_debt_id
+									)		
+						group by
+							cl.r_debt_id
+							,cl.dt
+						)cl on cl.r_debt_id = tc1.[ID]
+			order by
+				cl.dt asc
+			;drop table tmp_campaign_1
+			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 					set [State] = null
 					where [State] is not null
-			--</очистка состояния>
-
 		end
 
 	else if @n = 12 --удаляем закрытые дела
@@ -471,10 +461,7 @@ BEGIN
 --<district_2>
 	else if @n = 2 --конъюнктура
 		begin
-		if OBJECT_ID (N'tmp_campaign_2') is not null
-			drop table tmp_campaign_2
-		
-			;select * into tmp_campaign_2 from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
+			select * into tmp_campaign_2 from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 			(
@@ -537,7 +524,7 @@ BEGIN
 					)cl on cl.r_debt_id = d.id
 		order by
 			cl.dt asc
-
+		;drop table tmp_campaign_2
 		;delete from 
 			[INFINITY2].[Cx_Work].[public].[Table_5000081044]
 		where
@@ -898,10 +885,7 @@ BEGIN
 
 	else if @n = 21 --сортировка
 		begin
-			if OBJECT_ID (N'tmp_campaign_2') is not null
-				drop table tmp_campaign_2
-			
-				;select * into tmp_campaign_2 from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
+				select * into tmp_campaign_2 from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 					(
@@ -963,7 +947,8 @@ BEGIN
 			
 							)cl on cl.r_debt_id = d.id
 				order by
-					cl.dt asc			
+					cl.dt asc
+				;drop table tmp_campaign_2	
 			--<очистка состояния>			
 				;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 					set [State] = null
@@ -1353,10 +1338,7 @@ BEGIN
 --<district_3>
 	else if @n = 3 --конъюнктура
 		begin
-		if OBJECT_ID (N'tmp_campaign_3') is not null
-			drop table tmp_campaign_3
-		
-			;select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
+			select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 				(
@@ -1418,6 +1400,7 @@ BEGIN
 						)cl on cl.r_debt_id = d.id
 			order by
 				cl.dt asc
+			;drop table tmp_campaign_3
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5015640658]
 			where
@@ -1776,10 +1759,7 @@ BEGIN
 
 	else if @n = 31 --сортировка
 		begin
-			if OBJECT_ID (N'tmp_campaign_3') is not null
-				drop table tmp_campaign_3
-			
-				;select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
+				select * into tmp_campaign_3 from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 					(
@@ -1840,7 +1820,8 @@ BEGIN
 			
 							)cl on cl.r_debt_id = d.id
 				order by
-					cl.dt asc		
+					cl.dt asc
+				;drop table tmp_campaign_3
 			--<очистка состояния>			
 				;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 					set [State] = null
@@ -2230,10 +2211,7 @@ BEGIN
 --<district_4>
 	else if @n = 4 --конъюнктура
 		begin
-		if OBJECT_ID (N'tmp_campaign_4') is not null
-			drop table tmp_campaign_4
-		
-			;select * into tmp_campaign_4 from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
+			select * into tmp_campaign_4 from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 				(
@@ -2295,6 +2273,7 @@ BEGIN
 						)cl on cl.r_debt_id = d.id
 			order by
 				cl.dt asc
+			;drop table tmp_campaign_4
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5042218921]
 			where
@@ -2653,10 +2632,7 @@ BEGIN
 
 	else if @n = 41 --сортировка
 		begin
-			if OBJECT_ID (N'tmp_campaign_4') is not null
-				drop table tmp_campaign_4
-			
-				;select * into tmp_campaign_4 from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
+				select * into tmp_campaign_4 from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 					(
@@ -2717,7 +2693,8 @@ BEGIN
 			
 							)cl on cl.r_debt_id = d.id
 				order by
-					cl.dt asc	
+					cl.dt asc
+				;drop table tmp_campaign_4
 			--<очистка состояния>			
 				;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 					set [State] = null
@@ -3106,10 +3083,7 @@ BEGIN
 --<district_5>
 	else if @n = 5 --конъюнктура
 		begin
-		if OBJECT_ID (N'tmp_campaign_5') is not null
-			drop table tmp_campaign_5
-		
-			;select * into tmp_campaign_5 from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
+			select * into tmp_campaign_5 from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 				(
@@ -3171,6 +3145,7 @@ BEGIN
 						)cl on cl.r_debt_id = d.id
 			order by
 				cl.dt asc
+			;drop table tmp_campaign_5
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5052709673]
 			where
@@ -3530,10 +3505,7 @@ BEGIN
 
 	else if @n = 51 --сортировка
 		begin
-			if OBJECT_ID (N'tmp_campaign_5') is not null
-				drop table tmp_campaign_5
-			
-				;select * into tmp_campaign_5 from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
+				select * into tmp_campaign_5 from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 					(
@@ -3595,6 +3567,7 @@ BEGIN
 							)cl on cl.r_debt_id = d.id
 				order by
 					cl.dt asc
+				;drop table tmp_campaign_5
 			--<очистка состояния>			
 				;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 					set [State] = null
@@ -3983,10 +3956,7 @@ BEGIN
 --<district_6>
 	else if @n = 6 --конъюнктура
 		begin
-		if OBJECT_ID (N'tmp_campaign_6') is not null
-			drop table tmp_campaign_6
-		
-			;select * into tmp_campaign_6 from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
+			select * into tmp_campaign_6 from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 				(
@@ -4048,6 +4018,7 @@ BEGIN
 						)cl on cl.r_debt_id = d.id
 			order by
 				cl.dt asc
+			;drop table tmp_campaign_6
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5064249944]
 			where
@@ -4407,10 +4378,7 @@ BEGIN
 
 	else if @n = 61 --сортировка
 		begin
-			if OBJECT_ID (N'tmp_campaign_6') is not null
-				drop table tmp_campaign_6
-			
-				;select * into tmp_campaign_6 from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
+				select * into tmp_campaign_6 from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 					(
@@ -4472,6 +4440,7 @@ BEGIN
 							)cl on cl.r_debt_id = d.id
 				order by
 					cl.dt asc
+				;drop table tmp_campaign_6
 			--<очистка состояния>			
 				;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 					set [State] = null
@@ -4860,10 +4829,7 @@ BEGIN
 --<district_7>
 	else if @n = 7 --конъюнктура
 		begin
-		if OBJECT_ID (N'tmp_campaign_7') is not null
-			drop table tmp_campaign_7
-		
-			;select * into tmp_campaign_7 from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
+			select * into tmp_campaign_7 from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 				(
@@ -4925,6 +4891,7 @@ BEGIN
 						)cl on cl.r_debt_id = d.id
 			order by
 				cl.dt asc
+			;drop table tmp_campaign_7
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5068758013]
 			where
@@ -5284,10 +5251,7 @@ BEGIN
 		
 	else if @n = 71 --сортировка
 		begin
-			if OBJECT_ID (N'tmp_campaign_7') is not null
-				drop table tmp_campaign_7
-			
-				;select * into tmp_campaign_7 from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
+				select * into tmp_campaign_7 from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 					(
@@ -5349,6 +5313,7 @@ BEGIN
 							)cl on cl.r_debt_id = d.id
 				order by
 					cl.dt asc
+				;drop table tmp_campaign_7
 			--<очистка состояния>			
 				;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 					set [State] = null
@@ -5738,10 +5703,7 @@ BEGIN
 --<district_8>
 	else if @n = 8 --конъюнктура
 		begin
-		if OBJECT_ID (N'tmp_campaign_8') is not null
-			drop table tmp_campaign_8
-		
-			;select * into tmp_campaign_8 from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
+			select * into tmp_campaign_8 from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 			;insert into [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 				(
@@ -5803,6 +5765,7 @@ BEGIN
 						)cl on cl.r_debt_id = d.id
 			order by
 				cl.dt asc
+			;drop table tmp_campaign_8
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5336960870]
 			where
@@ -6165,10 +6128,7 @@ BEGIN
 
 	else if @n = 81 --сортировка
 		begin
-			if OBJECT_ID (N'tmp_campaign_8') is not null
-				drop table tmp_campaign_8
-			
-				;select * into tmp_campaign_8 from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
+				select * into tmp_campaign_8 from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 					(
@@ -6230,6 +6190,7 @@ BEGIN
 							)cl on cl.r_debt_id = d.id
 				order by
 					cl.dt asc
+				;drop table tmp_campaign_8
 			--<очистка состояния>			
 				;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 					set [State] = null
