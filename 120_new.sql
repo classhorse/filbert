@@ -1,8 +1,11 @@
---use i_collect
---go
+/*
+120 Report
+*/
+
+use i_collect
+go
 
 set nocount on
-
 
 SELECT
 	per.f + ' ' + per.i + ' ' + per.o 'ФИО'
@@ -10,68 +13,70 @@ SELECT
 	,b.name 'Банк'
 	,round(dbl.debt_sum, 2) 'Сумма_долга'
 	,cast(v.fd as date) 'Дата_передачи'
-	,v.int_sum 'Платеж'
-	,isnull(v.commission, '') / v.int_sum 'Процент'
-	,isnull(v.commission,'') 'Вознаграждение'
+	,sum(v.int_sum) 'Платеж'
+	,isnull(sum(v.commission), '') / sum(v.int_sum) 'Процент'
+	,isnull(sum(v.commission),'') 'Вознаграждение'
 	,v.fio as 'Агент'
 	,'' 'Переплата'
-	,v.name 'Отдел'
+	,v.otdel 'Отдел'
 	,datename(month, getdate()) 'Месяц'
-
 
 FROM
 	bank as b
 	inner join portfolio as p on b.id = p.parent_id
 	inner join debt as d on p.id = d.r_portfolio_id
 	inner join person as per on d.parent_id = per.id
+
+--смотрим закрепление за агентом {1}
+--период оплат {2}
 	inner join 
 			(
 			select
 				v.parent_id
-				,wt.fio
+				,u.f + ' ' + substring(u.i, 1, 1) + '.' + substring(u.o, 1, 1) + '.' fio
 				,sum(v.int_sum) int_sum
 				,sum(v.commission) commission
-				,wt.name
+				,d.name otdel
 				,wt.fd
 			from
 				payment_v v
-				inner join
+				inner join users u on v.r_user_id = u.id
+				left join department d on u.r_department_id = d.dep
+				--{1}
+				left join
 						(
 						select
-							wt.r_debt_id
-							,dep.name
+							wt.r_user_id
 							,wt.fd
-							,u.f + ' ' + substring(u.i, 1, 1) + '.' + substring(u.o, 1, 1) + '.' fio
 						from
-							i_collect.dbo.work_task_log as wt
-							left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							left join i_collect.dbo.department as dep on u.r_department_id = dep.dep
+							work_task_log wt
 						where
-							u.position like '%агент%'
-							and wt.id in
+							wt.id in
 									(
 									select
-										max(id)
+										max(id) --{1}
 									from
-										i_collect.dbo.work_task_log
+										work_task_log
 									group by
-										r_debt_id
+										r_user_id
 									)
 						)wt
-							on v.parent_id = wt.r_debt_id
+							on wt.r_user_id = v.r_user_id
+				
 			where
-				v.dt between '01-05-2016 00:00:01' and '31-05-2016 23:59:59'
+				v.dt between '01-05-2016 00:00:01' and '31-05-2016 23:59:59' --{2}
 				and v.is_cancel = 0
 				and v.is_confirmed = 1
+				and u.position like '%агент%'
 			group by
 				v.parent_id
-				,wt.fio
-				,wt.name
+				,u.f + ' ' + substring(u.i, 1, 1) + '.' + substring(u.o, 1, 1) + '.'
+				,d.name
 				,wt.fd
 			)v
 				on d.id = v.parent_id
-
-
+				
+--смотрим баланс на дату закрепления за оператором {0}
 	outer apply
 			(
 			select
@@ -80,21 +85,32 @@ FROM
 				debt_balance_log dbl
 			where
 				dbl.parent_id = d.id
-				and dbl.id in 
+				and dbl.id in
 							(
 							select
 								max(id)
 							from
 								debt_balance_log
 							where
-								dt <= v.fd
+								dt <= v.fd --{0}
 							group by
 								parent_id
 							)
-			
 			)dbl
 
 WHERE
 	b.id != 56
+
+GROUP BY
+	per.f
+	,per.i
+	,per.o
+	,d.contract
+	,d.credit_date
+	,b.name
+	,dbl.debt_sum
+	,v.fd
+	,v.fio
+	,v.otdel
 
 set nocount off;
