@@ -3,6 +3,7 @@
 import pypyodbc
 import os
 import time
+import socket
 
 
 con_str = 'Driver={SQL Server};' \
@@ -13,9 +14,15 @@ con_str = 'Driver={SQL Server};' \
 con = pypyodbc.connect(con_str, autocommit=True)
 
 cls = lambda: os.system('cls')
-color_b = lambda: os.system('color b')
-color_c = lambda: os.system('color c')
+color_a = lambda: os.system('color a') #зеленый
+color_b = lambda: os.system('color b') #голубой
+color_c = lambda: os.system('color c') #красный
+color_d = lambda: os.system('color d') #лиловый
+color_e = lambda: os.system('color e') #желтый
+color_9 = lambda: os.system('color 9') #синий
+
 color_b()
+hostname = socket.gethostname()
 
 
 name = raw_input(u'Hi, what is your name? ')
@@ -25,28 +32,35 @@ name2 = raw_input(u'Second name? ')
 cls()
 
 print u'Hi ', name, u', my name is '
-time.sleep(2)
+time.sleep(1.4)
 cls()
-color_c()
+color_a()
 print (u'''
 ██████████████████████████████████
 ''')
-time.sleep(0.3)
+time.sleep(0.014)
+color_b()
 print (u'''█──█─████─████─████─█─█─████─████''')
-time.sleep(0.3)
+time.sleep(0.014)
+color_c()
 print (u'''█──█─█──█─█──█─█──█─█─█─█──█─█──██''')
-time.sleep(0.3)
+time.sleep(0.014)
+color_d()
 print (u'''████─█──█─████─█──█─█─█─█──█─█──██''')
-time.sleep(0.3)
+time.sleep(0.014)
+color_e()
 print (u'''█──█─█──█─█─█──█──█─███─█──█─█──██''')
-time.sleep(0.3)
+time.sleep(0.014)
+color_9()
 print (u'''█──█─████─█─█──████──█──████─████''')
-time.sleep(0.3)
+time.sleep(0.014)
+color_a()
 print (u'''                                        Lestat Kim   v.0.9''')
-time.sleep(0.3)
+time.sleep(0.014)
+color_d()
 print (u'''██████████████████████████████████''')
 
-time.sleep(1)
+time.sleep(0.07)
 color_b()
 
 
@@ -105,7 +119,7 @@ def Horovod(n):
     insert into wh_data.dbo.Filbert_horovod_log (second_name, name, num,dt)
     values ( '{}', '{}', '{}', getdate() )
     '''
-    cur.execute(insert.format(name2.decode('cp866'), name.decode('cp866'), n.decode('cp866')))
+    cur.execute(insert.format(name2.decode('cp866'), name.decode('cp866'), n.decode('cp866'), hostname.encode('cp1251').decode('cp866')))
     cur.execute(kill.replace('N__', n))
     cur.execute(sql.replace('N__', n))
     cur.close()
