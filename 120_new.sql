@@ -1,11 +1,11 @@
-/*
-120 Report
-*/
+----------------------------------------
+/**************120 Report**************/
+----------------------------------------
 
 use i_collect
 go
 
-set nocount on
+--set nocount on
 
 SELECT
 	per.f + ' ' + per.i + ' ' + per.o 'ФИО'
@@ -50,8 +50,10 @@ FROM
 							,wt.fd
 						from
 							work_task_log wt
+							inner join users u on wt.r_user_id = u.id
 						where
-							wt.id in
+							u.position like '%агент%'
+							and wt.id in
 									(
 									select
 										max(id) --{1}
@@ -80,24 +82,30 @@ FROM
 	outer apply
 			(
 			select
-				dbl.debt_sum
+				dbl.parent_id
+				,dbl.debt_sum
 			from
 				debt_balance_log dbl
 			where
-				dbl.parent_id = d.id
+				dbl.parent_id = v.parent_id
 				and dbl.id in
 							(
 							select
-								max(id)
+								max(dbl.id)
 							from
-								debt_balance_log
+								debt_balance_log dbl
 							where
-								dt <= v.fd --{0}
+								dbl.dt < v.fd 
+								and dbl.debt_sum != 0
 							group by
-								parent_id
+								dbl.parent_id
 							)
-			)dbl
+			group by
+				dbl.parent_id
+				,dbl.debt_sum
 
+			)dbl
+			
 WHERE
 	b.id != 56
 
@@ -113,4 +121,5 @@ GROUP BY
 	,v.fio
 	,v.otdel
 
-set nocount off;
+--set nocount off;
+
