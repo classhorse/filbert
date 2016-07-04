@@ -5,7 +5,8 @@ SELECT
 
 	d.contract 'CONTRACTNUM'
 	,isnull(sum(cl.zvonki),'') 'Кол-во звонков'
-	,isnull(sum(cl.pisma),'') 'Кол-во писем'
+	--,isnull(sum(cl.pisma),'') 'Кол-во писем'
+	,isnull(sum(dl.letters),'') 'Кол-во писем'
 	,isnull(sum(s.sms),'') 'Кол-во смс'
 	,isnull(sum(cl.viezdi),'') 'Кол-во выездов'
 	,isnull(sum(cl.zvonki_with_debtor),'') 'Кол-во контактов с должником'
@@ -24,16 +25,29 @@ FROM
 			(
 			select 
 				cl.r_debt_id
-				,sum(case when (cl.typ in (1,3) and cl.result != 0) then 1 else 0 end) as zvonki
+				,sum(case when cl.typ in (1,3) then 1 else 0 end) as zvonki
 				,sum(case when (cl.typ in (1,3) and cl.result in (320712,320607,320616,320609,320714,320635,320704,320637)) then 1 else 0 end) zvonki_with_debtor
 				,sum(case when (cl.typ = 2) then 1 else 0 end) as viezdi
-				,sum (case when (cl.typ = 6) then 1 else 0 end) as pisma						
+				--,sum (case when (cl.typ = 6) then 1 else 0 end) as pisma
 			from
 				[i_collect].[dbo].[contact_log] as cl
 			group by
 				cl.r_debt_id
 
 			)cl		on d.id = cl.r_debt_id
+
+--letters
+		left join
+				(
+				select
+					dl.parent_id
+					,count(dl.id) letters
+				from
+					debt_letter dl
+				group by
+					dl.parent_id
+				)dl
+					on dl.parent_id = d.id
 			
 --sms
 	left join
@@ -293,6 +307,8 @@ where
 'МТСК66498405/810/13',
 'МТСЕКТ356065/810/14'
 )
+
+
 group by
 	d.contract
 

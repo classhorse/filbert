@@ -15,22 +15,24 @@ from
 	inner join [i_collect].[dbo].[debt] as d on p.id = d.r_portfolio_id
 	inner join [i_collect].[dbo].[person] as pers on d.parent_id = pers.id
 	
-	left join (select --ОПЛАТЫ
-					dc.parent_id, 
-					count(dc.int_sum) as kolvo_oplat,
-					sum(dc.int_sum) as summa_oplat
-				from
-					[i_collect].[dbo].[debt_calc] as dc
-				where
-					dc.calc_date between @d1 and @d2
-					and dc.is_confirmed = 1
-				group by
-					dc.parent_id
+	left join 
+			(
+			select --ОПЛАТЫ
+				dc.parent_id, 
+				count(dc.int_sum) as kolvo_oplat,
+				sum(dc.int_sum) as summa_oplat
+			from
+				[i_collect].[dbo].[debt_calc] as dc
+			where
+				dc.calc_date between @d1 and @d2
+				and dc.is_confirmed = 1
+			group by
+				dc.parent_id
 
-				) dc on d.id = dc.parent_id
+			) dc on d.id = dc.parent_id
 
 	left join (select --ОБЕЩАНИЯ
-					dp.parent_id,
+					dp.parent_id,			
 					count(dp.prom_sum) as kolvo_obeshaniy,
 					sum(dp.prom_sum)  as summa_obeshaniy
 				from

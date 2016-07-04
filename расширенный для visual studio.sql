@@ -441,10 +441,14 @@ from
 					sum(case when (cl.typ = 2) then 1 else 0 end) as viezdi,
 					sum (case when (cl.typ = 6)	then 1 else 0 end) as pisma,
 					sum(case when cl.typ not in (6,2,3,1,19) then 1 else 0 end) as prochee							
-				from [i_collect].[dbo].[contact_log] as cl
-				where cl.dt between @d1 and @d2	and cl.r_debt_id = d.id
-				group by cl.r_debt_id
-			)cl		--on d.id = cl.r_debt_id
+				from 
+					[i_collect].[dbo].[contact_log] as cl
+				where 
+					cl.dt between @d1 and @d2	
+					and cl.r_debt_id = d.id
+				group by 
+					cl.r_debt_id
+			)cl
 --calc summ
 	outer apply
 			(

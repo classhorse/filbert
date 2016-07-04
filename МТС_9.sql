@@ -17,6 +17,7 @@ from
 	inner join person as per on d.parent_id = per.id
 
 /*promise*/
+
 	outer apply
 			(
 				select 

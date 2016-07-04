@@ -266,9 +266,9 @@ FROM
 --действия за период (функция)
 I_collect.[dbo].FILBERT_report_87(debt.id,'01.05.2015','31.05.2015 23:59:59')
 
---добавленные телефоны (функция)
-I_collect.[dbo].FILBERT_DopInfPhone( per.id,  @d1 DATETIME,  @d2 DATETIME  )
 
+--добавленные телефоны (функция)
+I_collect.[dbo].FILBERT_DopInfPhone( per.id,  @d1 DATETIME,  @d2 DATETIME)
 @id – id персоны
 
 

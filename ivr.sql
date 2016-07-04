@@ -52,12 +52,12 @@ from
 					wt.id in 
 
 							(
-								select
-									max(id)
-								from
-									[i_collect].[dbo].[work_task_log]
-								group by
-									r_debt_id
+							select
+								max(id)
+							from
+								[i_collect].[dbo].[work_task_log]
+							group by
+								r_debt_id
 							)
 
 			)wt 	on d.id = wt.r_debt_id
@@ -118,3 +118,4 @@ where
 	and len(ph.number) = 11
 	and wt.id != 1551
 	and (p.end_date >= dateadd(day, 5, @d) or p.end_date is null)
+	and (pr.prom_date < dateadd(day, -5, getdate()) or pr.prom_date is null)
