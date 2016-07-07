@@ -4,11 +4,12 @@ import pypyodbc
 import os
 import time
 import socket
+import getpass
 
 
 con_str = 'Driver={SQL Server};' \
           'Server=192.168.11.9 ;' \
-          'Database=i_collect;' \
+          'Database=wh_data;' \
           'Uid=sa;Pwd=12121212;'
 
 con = pypyodbc.connect(con_str, autocommit=True)
@@ -22,18 +23,14 @@ color_e = lambda: os.system('color e') #желтый
 color_9 = lambda: os.system('color 9') #синий
 
 color_b()
-hostname = socket.gethostname()
+user = getpass.getuser()
 
 
-name = raw_input(u'Hi, what is your name? ')
 
-name2 = raw_input(u'Second name? ')
 
-cls()
-
-print u'Hi ', name, u', my name is '
+print u'Hi ', user, u', welcome to '
 time.sleep(1.4)
-cls()
+
 color_a()
 print (u'''
 ██████████████████████████████████
@@ -55,7 +52,7 @@ color_9()
 print (u'''█──█─████─█─█──████──█──████─████''')
 time.sleep(0.014)
 color_a()
-print (u'''                                        Lestat Kim   v.0.9''')
+print (u'''                                        Lestat Kim   v 1.0.2''')
 time.sleep(0.014)
 color_d()
 print (u'''██████████████████████████████████''')
@@ -86,7 +83,7 @@ def Horovod(n):
       EXEC sp_add_jobstep
       @job_name = N'HOROVOD N__',
       @step_name = N'HOROVOD N__',
-      @database_name = N'i_collect',
+      @database_name = N'wh_data',
       @subsystem = N'TSQL',
       @command = N'exec Filbert_HOROVOD N__',
       @retry_attempts = 0,
@@ -106,21 +103,11 @@ def Horovod(n):
       @job_name = N'HOROVOD N__';'''
 
 
-    kill = '''
-    declare @Job_id binary(16)
-    select @Job_id = job_id from msdb.dbo.sysjobs where (name = N'HOROVOD N__')
-
-    if (@Job_id IS NOT NULL)
-    begin
-    exec msdb.dbo.sp_delete_job @Job_id
-    end'''
-
     insert = u'''
-    insert into wh_data.dbo.Filbert_horovod_log (second_name, name, num,dt)
-    values ( '{}', '{}', '{}', getdate() )
+    insert into wh_data.dbo.Filbert_horovod_log_2 (num, hostname, dt)
+    values ( '{}', '{}', getdate() )
     '''
-    cur.execute(insert.format(name2.decode('cp866'), name.decode('cp866'), n.decode('cp866'), hostname.encode('cp1251').decode('cp866')))
-    cur.execute(kill.replace('N__', n))
+    cur.execute(insert.format(n.decode('cp866'), user.decode('cp866')))
     cur.execute(sql.replace('N__', n))
     cur.close()
 
