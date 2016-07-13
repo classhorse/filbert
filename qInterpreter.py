@@ -7,10 +7,10 @@ import getpass
 from colorama import init
 from termcolor import colored
 import time
-
-
-sys.stdout = codecs.getwriter('cp866')(sys.stdout,'replace')
+sys.stdout = codecs.getwriter('cp866')(sys.stdout,'replace') #подключаем русский язык
 init()
+
+
 cls = lambda: os.system('cls')
 magenta = lambda: os.system('color d')
 white = lambda: os.system('color f')
@@ -74,6 +74,9 @@ class QiHi(object):
 
 
 class ExecQueryICollect(object):
+
+    """Just exec some Query from db: i_collect"""
+
     def __init__(self):
         self.con_str = 'Driver={SQL Server};' \
                        'Server=192.168.11.9 ;' \
@@ -88,6 +91,9 @@ class ExecQueryICollect(object):
 
 
 class ExecQueryWhData(object):
+
+    """Just exec some Query from db: wh_data"""
+
     def __init__(self):
         self.con_str = 'Driver={SQL Server};' \
                        'Server=192.168.11.9 ;' \
@@ -137,6 +143,7 @@ phone_typ = u'''
         parent_id = 4'''
 
 class QueryICollect(object):
+
     """SQL Query from Database: i_collect"""
 
     def __init__(self, sql):
@@ -166,6 +173,7 @@ class QueryICollect(object):
 
 
 class QueryWhData(object):
+
     """SQL Query from Database: wh_data"""
 
     #TODO реализовать хранилище данных с типом продукта
@@ -201,13 +209,12 @@ class QueryWhData(object):
 
 
 class ModuleList(object):
+
     """concatenate behavior part of SQL queries"""
 
     first_query = None
+
     def __init__(self):
-
-        """ dict of SQL parts """
-
         self.try_dict = {
 
             'prom': [u'''
@@ -231,7 +238,7 @@ class ModuleList(object):
                             group by
                                 dp2.id,
                                 dp2.prom_sum
-                        )dp2 	on dp2.id=dp.id
+                        )dp2    on dp2.id=dp.id
             where
                 dp.dt %s
             group by
@@ -262,8 +269,8 @@ class ModuleList(object):
 
             , 'calc': [u'''
 
-	inner join
-	        (
+    inner join
+            (
             select
                 dc.parent_id
             from
@@ -307,14 +314,14 @@ class ModuleList(object):
                 having
                     sum(dc2.PP_kolvo) %s
                     and sum(dc2.PP_sum) %s
-	        )dc
-	            on dc.parent_id = d.id''', colored(u'даты оплат, суммы и количество', 'yellow'),
+            )dc
+                on dc.parent_id = d.id''', colored(u'даты оплат, суммы и количество', 'yellow'),
                        (colored(u'даты', 'yellow'), colored(u'суммы', 'yellow'), colored(u'количество', 'yellow'))]
 
             , 'phone': [u'''
 
-	inner join
-	        (
+    inner join
+            (
             /*return parametres phone numbers*/
             select
                 ph.parent_id
@@ -327,90 +334,90 @@ class ModuleList(object):
 
             )ph
                 on ph.parent_id = per.id''', colored(u'тип телефона и статус', 'yellow'), (colored(u'''
-1	Мобильный
-2	Домашний
-3	Рабочий
-4	Дополнительный
-41	Поручитель-Мобильный
-42	Поручитель-Домашний
-43	Поручитель-Рабочий
-104	Поручитель-Дополнительный
-201	Залогодатель-Мобильный
-202	Залогодатель-Домашний
-203	Залогодатель-Рабочий
-204	Залогодатель-Дополнительный
-31	Моб.Третье лицо
-32	Дом.Третье лицо
-33	Раб. Третье лицо
-44	Суд Приставы
-34	Доп. Третье лицо
-205	Созаемщик-Мобильный
-206	Созаемщик-Рабочий
+1   Мобильный
+2   Домашний
+3   Рабочий
+4   Дополнительный
+41  Поручитель-Мобильный
+42  Поручитель-Домашний
+43  Поручитель-Рабочий
+104 Поручитель-Дополнительный
+201 Залогодатель-Мобильный
+202 Залогодатель-Домашний
+203 Залогодатель-Рабочий
+204 Залогодатель-Дополнительный
+31  Моб.Третье лицо
+32  Дом.Третье лицо
+33  Раб. Третье лицо
+44  Суд Приставы
+34  Доп. Третье лицо
+205 Созаемщик-Мобильный
+206 Созаемщик-Рабочий
 
 phone.typ''', 'cyan'), colored(u'''
-1	Не звонили ни разу
-2	Результата не было
-3	Неверный номер
-4	Результат
-5	Последний результат
-6	Автоинформатор
+1   Не звонили ни разу
+2   Результата не было
+3   Неверный номер
+4   Результат
+5   Последний результат
+6   Автоинформатор
 
 phone.status''', 'cyan'))]
 
             , 'perspect': [u'''
 
 inner join
-		(
-		select
-			c.r_debt_id
-		from
-			contact_log c
-		where
-			c.typ in (1,3)
-			and c.dt %s
-			and cl.result in(
-			1,2,4,5,11,12,14,15,16,201,202,204,207,208,210,212,213,706,
-			707,712,714,715,717,718,719,720,721,723,726,729,737,738,739,
-			740,816,817,818,819,820,821,824,825,826,838,839,840,842,861,
-			862,863,865,866,867,868,870,874,875,877,880,120154,120155,
-			120156,120183,120186,120187,120188,120189,120190,120191,120193,
-			120194,120197,120198,120199,120200,120201,120202,120205,120206,
-			120207,120214,120215,120216,120217,120218,120221,120222,120223,
-			120224,120225,120226,120227,120228,120231,120233,120234,120235,
-			120237,120239,120240,120241,320157,320161,320272,320273,320274,
-			320280,320283,320284,320287,320297,320300,320301,320304,320310,
-			320311,320313,320316,320317,320318,320319,320320,320322,320712,
-			320607,320616,320609,320713,320614,320617,320610,320714,320635,
-			320704,320637,320715,320640,320705,320710,321084,321023,321024,
-			21025,321137,321138,321139,321140,321057,321034,321032,321028,
-			321035,321033,321031,321027,321142,321143,321144,321145,321083,
-			321078,321073,321085,321082,321077,321072,321062,321081,321076,
-			321071,321061,321147,321148,321149,321150,321080,321075,321070,
-			321086,321079,321074,321069,321060,321022,321021,321020,321017,
-			321152,321153,321154,321155,320879,320880,320881,320882,320929,
-			320927,320925,320930,320928,320926,320924,320921,321158,321159,
-			321160,321161,320920,320919,320918,321157,320917,320916,320915,
-			320912,320910,320909,320908,320905,321164,321165,321166,321167,
-			320903,320902,320901,321163,320900,320899,320898,320895,320893,
-			320892,320891,320888,321226,321225,321223,321224,321221,321220,
-			321219,321218,321215,320936,320938,320932,321213,321212,321211,
-			321210,321209,321208,321207,321206,321205,321202,321200,321199,
-			321198,321195,321183,321181,321179,321178,321177,321176,321175,
-			321174,321173,320935,320937,320931
-			--феникс
-			,321513,321457,321458,321459,321486,321484,321482,321462,321485,
-			321483,321465,321461,321512,321507,321502,321514,321511,321506,
-			321501,321491,321510,321505,321500,321490,321509,321504,321499,
-			321515,321508,321503,321498,321489,321456,321455,321454,321451
-			--МТС
-			,320712,320607,320616,320609,320713,320614,320617,320610,320714,
-			320635,320704,320637,320715,320640,320705,320710)
-			)
-		group by
-			c.r_debt_id
-		having count(c.id) %s
-		)persp
-			on persp.r_debt_id = d.id\n''',
+        (
+        select
+            c.r_debt_id
+        from
+            contact_log c
+        where
+            c.typ in (1,3)
+            and c.dt %s
+            and cl.result in(
+            1,2,4,5,11,12,14,15,16,201,202,204,207,208,210,212,213,706,
+            707,712,714,715,717,718,719,720,721,723,726,729,737,738,739,
+            740,816,817,818,819,820,821,824,825,826,838,839,840,842,861,
+            862,863,865,866,867,868,870,874,875,877,880,120154,120155,
+            120156,120183,120186,120187,120188,120189,120190,120191,120193,
+            120194,120197,120198,120199,120200,120201,120202,120205,120206,
+            120207,120214,120215,120216,120217,120218,120221,120222,120223,
+            120224,120225,120226,120227,120228,120231,120233,120234,120235,
+            120237,120239,120240,120241,320157,320161,320272,320273,320274,
+            320280,320283,320284,320287,320297,320300,320301,320304,320310,
+            320311,320313,320316,320317,320318,320319,320320,320322,320712,
+            320607,320616,320609,320713,320614,320617,320610,320714,320635,
+            320704,320637,320715,320640,320705,320710,321084,321023,321024,
+            21025,321137,321138,321139,321140,321057,321034,321032,321028,
+            321035,321033,321031,321027,321142,321143,321144,321145,321083,
+            321078,321073,321085,321082,321077,321072,321062,321081,321076,
+            321071,321061,321147,321148,321149,321150,321080,321075,321070,
+            321086,321079,321074,321069,321060,321022,321021,321020,321017,
+            321152,321153,321154,321155,320879,320880,320881,320882,320929,
+            320927,320925,320930,320928,320926,320924,320921,321158,321159,
+            321160,321161,320920,320919,320918,321157,320917,320916,320915,
+            320912,320910,320909,320908,320905,321164,321165,321166,321167,
+            320903,320902,320901,321163,320900,320899,320898,320895,320893,
+            320892,320891,320888,321226,321225,321223,321224,321221,321220,
+            321219,321218,321215,320936,320938,320932,321213,321212,321211,
+            321210,321209,321208,321207,321206,321205,321202,321200,321199,
+            321198,321195,321183,321181,321179,321178,321177,321176,321175,
+            321174,321173,320935,320937,320931
+            --феникс
+            ,321513,321457,321458,321459,321486,321484,321482,321462,321485,
+            321483,321465,321461,321512,321507,321502,321514,321511,321506,
+            321501,321491,321510,321505,321500,321490,321509,321504,321499,
+            321515,321508,321503,321498,321489,321456,321455,321454,321451
+            --МТС
+            ,320712,320607,320616,320609,320713,320614,320617,320610,320714,
+            320635,320704,320637,320715,320640,320705,320710)
+            )
+        group by
+            c.r_debt_id
+        having count(c.id) %s
+        )persp
+            on persp.r_debt_id = d.id\n''',
                             colored(u'даты и количество перспективных контактов', 'yellow'),
                             (colored(u'даты', 'yellow'), colored(u'количество', 'yellow'))]
 
@@ -431,6 +438,7 @@ FROM
 
 
     def concatenator(self):
+
         """ concatenate SQL parts """
 
         print colored(u'\nТеперь выбираем модули\nПросто напиши через запятую модули, которые будешь использовать\n\n\n', 'green')
@@ -456,91 +464,111 @@ FROM
         return result_query
 
 
+class Predicats(object):
 
-#FIXME START Q-INTERPRETER
+    """Show simple predicats"""
 
-QiHi().qi_rus()
-print colored(u'\n\nПриветствую тебя', 'yellow'), user, colored(u'\nДобро пожаловать в систему Q-Interpreter 0.1\n', 'yellow')
-print colored(u'Используй стандартные SQL предикаты для парамтризации, такие как:\n', 'green')
-print colored(u'in', 'magenta'), u'список, например', colored('in (49, 14)', 'magenta')
-print colored(u'not in', 'magenta'), u'список исключений, например', colored(u'not in (6,7,8,10)', 'magenta')
-print colored(u'=', 'magenta'), u'равно'
-print colored(u'!=', 'magenta'), u'не равно'
-print colored(u'>', 'magenta'), u'больше'
-print colored(u'<', 'magenta'), u'меньше'
-print colored(u'>=', 'magenta'), u'больше или равно'
-print colored(u'<=', 'magenta'), u'меньше или равно'
-print colored(u'!<', 'magenta'), u'не меньше'
-print colored(u'!>', 'magenta'), u'не больше'
-print colored(u'between', 'magenta'), u"между, например", colored(u"between '01-01-2015' and 07-07-2016", 'magenta')
-
-ask_continue = raw_input(u'\n\n\nПродолжаем? д\н:   ')
-
-
-if ask_continue == None:
-    cls()
-else:
-    cls()
+    def show_predicats(self):
+            print colored(u'\n\nПриветствую тебя', 'yellow')\
+                , user, colored(u'\nДобро пожаловать в систему Q-Interpreter 0.1\n', 'yellow')
+            print colored(u'\n\n\n\n\nИспользуй стандартные SQL предикаты для парамтризации, такие как:\n','green')
+            print colored(u'in', 'magenta')\
+                ,u'список, например', \
+                colored('in (49, 14)', 'magenta')
+            print colored(u'not in', 'magenta'), u'список исключений, например', \
+                colored(u'not in (6,7,8,10)', 'magenta')
+            print colored(u'=', 'magenta'), u'равно'
+            print colored(u'!=', 'magenta'), u'не равно'
+            print colored(u'>', 'magenta'), u'больше'
+            print colored(u'<', 'magenta'), u'меньше'
+            print colored(u'>=', 'magenta'), u'больше или равно'
+            print colored(u'<=', 'magenta'), u'меньше или равно'
+            print colored(u'!<', 'magenta'), u'не меньше'
+            print colored(u'!>', 'magenta'), u'не больше'
+            print colored(u'between', 'magenta')\
+                , u"между, например", colored(u"between '01-01-2015' and 07-07-2016", 'magenta')
 
 
-print colored(u'\n\nДля начала мы выберем Банк(-и) и Портфель(-и)\n', 'green')
-time.sleep(1)
+class FirstStepAfterAnimation(object):
+
+    """Ask junior about start the Q-Interpreter"""
+
+    cmd_off = lambda: os.system('tskill cmd')
+
+    def __init__(self):
+        self.ask_continue = raw_input(u'\n\n\nПродолжаем? y \ n:   ')
 
 
-#FIXME БАНК
-print QueryICollect(bank).two  # показываем список открытых банков
-bank_list = u'   b.id {0}\n'  # первое условие со списком банков
-bank_input = raw_input(colored(u'\nБанк(-и):   ', 'magenta'))  # выбираем список банков
-
-cls()
-print colored(u'Теперь выбираем портфели', 'green')
-time.sleep(1)
-
-# FIXME ПОРТФЕЛЬ
-print QueryICollect(portfolio.format(bank_input)).two  # показываем список портфелей выбранных банков
-portfolio_list = u'   and p.id {0}\n'  # условие
-portfolio_input = raw_input(colored(u'Портфель(-и):  ', 'magenta'))  # выбираем список портфелей
-
-cls()
-
-first = ModuleList().concatenator()
-
-print first \
-    +bank_list.format(bank_input) \
-    + portfolio_list.format(portfolio_input) \
+    def start_or_not(self):
+        if self.ask_continue == u'n' or self.ask_continue == u'N':
+            print u'До новых встреч!'
+            exit()
+            self.cmd_off()
+        else:
+            cls()
 
 
+class ForTheStartWeMust(object):
 
+    """Print what we gonna do"""
 
-#FIXME тут я типа пытался посмотреть какой запрос мне вернет
+    start = u'\n\nДля начала мы выберем Банк(-и) и Портфель(-и)\n'
 
-# class ModuleWhere(object):#
-#     """Concate second Part of SQL queries"""
-#
-#     print colored(u'\nПросто напиши через запятую модули условий, которые будешь использовать\n\n\n', 'green')
-#
-#     def __init__(self):
-#         self.concate = '''
-#
-#         WHERE
-#             '''
-#
-#         self.try_dict = {
-#             # FIXME передать список банков запросом
-#             'bank': [u'''
-#
-#                 b.id %s
-#                 ''', colored(u'Список банков', 'yellow'),
-#                      (colored(u'даты', 'yellow'), colored(u'количество', 'yellow'))]
+    def start_func(self):
+        print colored(self.start, 'green')
 
 
 
+class BankAndPortfParam(object):
+
+    """Param bank and portfolio string for concatenate"""
+
+    bank_and_portf_param = None
+    bank_list = u'\nWHERE\n     b.id {}\n'  # первое условие со списком банков
+    portfolio_list = u'         and p.id {0}\n'  # условие
+    bank_inp = ''
+    port_inp = ''
+
+    def bank(self):
+        print QueryICollect(bank).two  # показываем список открытых банков
+        bank_input = raw_input(colored(u'\nБанк(-и):   ', 'magenta'))  # выбираем список банков
+        self.bank_inp = self.bank_list.format(bank_input)
+        cls()
+
+
+    def portf(self):
+        print QueryICollect(portfolio.format(self.bank_inp)).two  # показываем список портфелей выбранных банков
+        self.port_inp = raw_input(colored(u'\nПортфель(-и):  ', 'magenta'))  # выбираем список портфелей
 
 
 
-# if __name__ == '__main__':
-#     x = ModuleList().concatenator()
-#     print x, '\nazaza'
+#TODO тут будет второй concatenator
 
 
 
+class Main(object):
+
+    """Start Main() of Q-Interpreter"""
+
+    x = None
+
+    animation = QiHi().qi_rus()  #Animnation
+    predicats = Predicats().show_predicats() #показываем SQL предикаты
+    after_animation = FirstStepAfterAnimation().start_or_not() #продолжаем работать с программой
+    show_we_must = ForTheStartWeMust().start_func() #показываем для начала выбрать банк и портфель
+    first_concate = ModuleList().concatenator()
+
+    def first_start(self):
+        self.animation()
+        self.predicats()
+        self.after_animation()
+        self.show_we_must()
+        BankAndPortfParam()
+
+    def full_query(self):
+        x = self.first_concate + BankAndPortfParam().bank_inp + BankAndPortfParam().port_inp
+        print x
+
+
+if __name__ == '__main__':
+    Main()
