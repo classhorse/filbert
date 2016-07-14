@@ -3,8 +3,10 @@
 import pypyodbc
 import os
 import time
-import socket
 import getpass
+import sys
+import codecs
+sys.stdout = codecs.getwriter('cp866')(sys.stdout,'replace')
 
 
 con_str = 'Driver={SQL Server};' \
@@ -28,7 +30,7 @@ user = getpass.getuser()
 
 
 
-print u'Hi ', user, u', welcome to '
+print u'Привет', user, u', Добро пожаловать в систему '
 time.sleep(1.4)
 
 color_a()
@@ -52,7 +54,7 @@ color_9()
 print (u'''█──█─████─█─█──████──█──████─████''')
 time.sleep(0.014)
 color_a()
-print (u'''                                        Lestat Kim   v 1.0.2''')
+print (u'''                                        Автор: Лестат | Версия 1.4''')
 time.sleep(0.014)
 color_d()
 print (u'''██████████████████████████████████''')
@@ -102,11 +104,20 @@ def Horovod(n):
       ;EXEC dbo.sp_add_jobserver
       @job_name = N'HOROVOD N__';'''
 
+    kill = u'''
+    declare @Job_id binary(16)
+    select @Job_id = job_id from msdb.dbo.sysjobs where (name = N'HOROVOD N__')
+
+    if (@Job_id IS NOT NULL)
+    begin
+    exec msdb.dbo.sp_delete_job @Job_id
+    end'''
 
     insert = u'''
     insert into wh_data.dbo.Filbert_horovod_log_2 (num, hostname, dt)
     values ( '{}', '{}', getdate() )
     '''
+    cur.execute(kill.replace('N__', n))
     cur.execute(insert.format(n.decode('cp866'), user.decode('cp866')))
     cur.execute(sql.replace('N__', n))
     cur.close()
@@ -117,19 +128,19 @@ while True:
     try:
         ask = int(input(u'''
 
-    Update the Campaign's in parts or full ?
+    Обновить кампанию полностью или частично ?
 
-    1 - Full
-    2 - In parts
+    1 - Полностью
+    2 - Частично
 
 
 
-    Enter the number:  '''))
+    Введите номер:  '''))
         cls()
         if ask == 1:
             ask_1 = int(input(u'''
 
-    Full, excellent! Which one ?
+    Полностью ? Отлично! Какую именно?
 
     1 - Outbound_1      5 - Outbound_5
     2 - Outbound_2      6 - Outbound_6
@@ -138,7 +149,7 @@ while True:
 
 
 
-    Enter the number:  '''))
+    Введите номер:  '''))
 
             cls()
 
@@ -173,7 +184,7 @@ while True:
         elif ask == 2:
             ask_2 = int(input(u'''
 
-    In parts ? Excellent, which one?
+    Частично? Отлично! Какую именно?
 
     1 - Outbound_1      5 - Outbound_5
     2 - Outbound_2      6 - Outbound_6
@@ -182,24 +193,24 @@ while True:
 
 
 
-    Enter the number  '''))
+    Введите номер:  '''))
 
             cls()
 
             if ask_2 == 1:
                 ask_2_1 = int(input(u'''
 
-    Select an action:
+    Введите действие:
 
-    1 - Sort by last call date
-    2 - Remove the closed debts
-    3 - Remove fixed debts
-    4 - Remove office phone number's
-    5 - Remove debts with promises
+    1 - Отсортировать по последней дате звонка
+    2 - Удалить закрытые долги
+    3 - Удалить закрепленные долги
+    4 - Удалить рабочие номера телефонов с учетом часового пояса
+    5 - Удалить долги с обещаниями
 
 
 
-    Enter the number:   '''))
+    Введите номер:   '''))
 
                 cls()
 
@@ -224,17 +235,17 @@ while True:
             elif ask_2 == 2:
                 ask_2_2 = int(input(u'''
 
-    Select an action:
+    Введите действие:
 
-    1 - Sort by last call date
-    2 - Remove the closed debts
-    3 - Remove fixed debts
-    4 - Remove office phone number's
-    5 - Remove debts with promises
+    1 - Отсортировать по последней дате звонка
+    2 - Удалить закрытые долги
+    3 - Удалить закрепленные долги
+    4 - Удалить рабочие номера телефонов с учетом часового пояса
+    5 - Удалить долги с обещаниями
 
 
 
-    Enter the number:   '''))
+    Введите номер:   '''))
 
                 cls()
 
@@ -259,17 +270,17 @@ while True:
             elif ask_2 == 3:
                 ask_2_3 = int(input(u'''
 
-    Select an action:
+    Введите действие:
 
-    1 - Sort by last call date
-    2 - Remove the closed debts
-    3 - Remove fixed debts
-    4 - Remove office phone number's
-    5 - Remove debts with promises
+    1 - Отсортировать по последней дате звонка
+    2 - Удалить закрытые долги
+    3 - Удалить закрепленные долги
+    4 - Удалить рабочие номера телефонов с учетом часового пояса
+    5 - Удалить долги с обещаниями
 
 
 
-    Enter the number:   '''))
+    Введите номер:   '''))
 
                 cls()
 
@@ -294,17 +305,17 @@ while True:
             elif ask_2 == 4:
                 ask_2_4 = int(input(u'''
 
-    Select an action:
+    Введите действие:
 
-    1 - Sort by last call date
-    2 - Remove the closed debts
-    3 - Remove fixed debts
-    4 - Remove office phone number's
-    5 - Remove debts with promises
+    1 - Отсортировать по последней дате звонка
+    2 - Удалить закрытые долги
+    3 - Удалить закрепленные долги
+    4 - Удалить рабочие номера телефонов с учетом часового пояса
+    5 - Удалить долги с обещаниями
 
 
 
-    Enter the number:   '''))
+    Введите номер:   '''))
 
                 cls()
 
@@ -329,17 +340,17 @@ while True:
             elif ask_2 == 5:
                 ask_2_5 = int(input(u'''
 
-    Select an action:
+    Введите действие:
 
-    1 - Sort by last call date
-    2 - Remove the closed debts
-    3 - Remove fixed debts
-    4 - Remove office phone number's
-    5 - Remove debts with promises
+    1 - Отсортировать по последней дате звонка
+    2 - Удалить закрытые долги
+    3 - Удалить закрепленные долги
+    4 - Удалить рабочие номера телефонов с учетом часового пояса
+    5 - Удалить долги с обещаниями
 
 
 
-    Enter the number:   '''))
+    Введите номер:   '''))
 
                 cls()
 
@@ -364,17 +375,17 @@ while True:
             elif ask_2 == 6:
                 ask_2_6 = int(input(u'''
 
-    Select an action:
+    Введите действие:
 
-    1 - Sort by last call date
-    2 - Remove the closed debts
-    3 - Remove fixed debts
-    4 - Remove office phone number's
-    5 - Remove debts with promises
+    1 - Отсортировать по последней дате звонка
+    2 - Удалить закрытые долги
+    3 - Удалить закрепленные долги
+    4 - Удалить рабочие номера телефонов с учетом часового пояса
+    5 - Удалить долги с обещаниями
 
 
 
-    Enter the number:   '''))
+    Введите номер:   '''))
 
                 cls()
 
@@ -399,17 +410,17 @@ while True:
             elif ask_2 == 7:
                 ask_2_7 = int(input(u'''
 
-    Select an action:
+    Введите действие:
 
-    1 - Sort by last call date
-    2 - Remove the closed debts
-    3 - Remove fixed debts
-    4 - Remove office phone number's
-    5 - Remove debts with promises
+    1 - Отсортировать по последней дате звонка
+    2 - Удалить закрытые долги
+    3 - Удалить закрепленные долги
+    4 - Удалить рабочие номера телефонов с учетом часового пояса
+    5 - Удалить долги с обещаниями
 
 
 
-    Enter the number:   '''))
+    Введите номер:   '''))
 
                 cls()
 
@@ -434,17 +445,17 @@ while True:
             elif ask_2 == 8:
                 ask_2_8 = int(input(u'''
 
-    Select an action:
+    Введите действие:
 
-    1 - Sort by last call date
-    2 - Remove the closed debts
-    3 - Remove fixed debts
-    4 - Remove office phone number's
-    5 - Remove debts with promises
+    1 - Отсортировать по последней дате звонка
+    2 - Удалить закрытые долги
+    3 - Удалить закрепленные долги
+    4 - Удалить рабочие номера телефонов с учетом часового пояса
+    5 - Удалить долги с обещаниями
 
 
 
-    Enter the number:   '''))
+    Введите номер:   '''))
 
                 cls()
 
@@ -472,4 +483,4 @@ while True:
         else:
             print u'Error (づ￣ ³￣)づ  '
     except ValueError:
-        print u'Valid number, please'
+        print u'Номер не валидный'
