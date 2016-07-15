@@ -7,13 +7,50 @@ import getpass
 import sys
 import codecs
 sys.stdout = codecs.getwriter('cp866')(sys.stdout,'replace')
+from colorama import init
+from termcolor import colored
+init()
+
+
+class Query(object):
+
+    """SQL Query from Database: i_collect"""
+    job = """
+   select distinct
+    sj.name
+    ,sjh.run_date
+    ,sjh.run_time
+    ,iif(sjs.last_run_outcome = 0, 'Error!!! make a pause', 'Wait') result
+from
+    msdb.dbo.sysjobs sj
+    left join msdb.dbo.sysjobhistory sjh on sj.job_id = sjh.job_id
+    left join msdb.dbo.sysjobservers sjs on sj.job_id = sjs.job_id
+where
+    sj.name like 'HOROVOD%'
+
+    """
+    def __init__(self):
+        self.con_str = 'Driver={SQL Server};' \
+                       'Server=192.168.11.9 ;' \
+                       'Database=msdb;' \
+                       'Uid=sa;Pwd=12121212;'
+        self.con = pypyodbc.connect(self.con_str, autocommit=True)
+        self.cur = self.con.cursor()
+        self.r = self.cur.execute(self.job)
+        self.column_list = [tuple[0] for tuple in self.r.description]
+        self.res = self.r.fetchall()
+
+    def three(self):
+        print self.column_list[0], '        ',  self.column_list[1], ' ',self.column_list[2], ' ', self.column_list[3]
+        for i in self.res:
+            print i[0], '   ', i[1], '      ', i[2], '     ', i[3]
+        self.cur.close()
 
 
 con_str = 'Driver={SQL Server};' \
           'Server=192.168.11.9 ;' \
           'Database=wh_data;' \
           'Uid=sa;Pwd=12121212;'
-
 con = pypyodbc.connect(con_str, autocommit=True)
 
 cls = lambda: os.system('cls')
@@ -30,7 +67,7 @@ user = getpass.getuser()
 
 
 
-print u'Привет', user, u', Добро пожаловать в систему '
+print colored(u'Привет', 'yellow'), user, colored(u', Добро пожаловать в систему ', 'yellow')
 time.sleep(1.4)
 
 color_a()
@@ -63,10 +100,10 @@ time.sleep(0.07)
 color_b()
 
 
-done = u'''
+done = colored(u'''
 ╔╔╗╦╔╗╦╗╔╗
 ║║║║║║╠╣║║
-║╚╝║╚╝╩╝╚╝'''
+║╚╝║╚╝╩╝╚╝''', 'green')
 
 
 
@@ -74,7 +111,7 @@ def Horovod(n):
     global con_str
     global con
     cur = con.cursor()
-    sql = '''
+    sql = u'''
       use msdb
       EXEC dbo.sp_add_job
       @job_name = N'HOROVOD N__',
@@ -126,19 +163,22 @@ def Horovod(n):
 
 while True:
     try:
-        ask = int(input(u'''
+        ask = int(input(colored(u'''
 
     Обновить кампанию полностью или частично ?
 
     1 - Полностью
+
     2 - Частично
 
+    3 - Список роботов
 
 
-    Введите номер:  '''))
+
+    Введите номер:  ''', 'yellow')))
         cls()
         if ask == 1:
-            ask_1 = int(input(u'''
+            ask_1 = int(input(colored(u'''
 
     Полностью ? Отлично! Какую именно?
 
@@ -149,7 +189,7 @@ while True:
 
 
 
-    Введите номер:  '''))
+    Введите номер:  ''', 'yellow')))
 
             cls()
 
@@ -182,7 +222,7 @@ while True:
 
 
         elif ask == 2:
-            ask_2 = int(input(u'''
+            ask_2 = int(input(colored(u'''
 
     Частично? Отлично! Какую именно?
 
@@ -193,12 +233,12 @@ while True:
 
 
 
-    Введите номер:  '''))
+    Введите номер:  ''', 'yellow')))
 
             cls()
 
             if ask_2 == 1:
-                ask_2_1 = int(input(u'''
+                ask_2_1 = int(input(colored(u'''
 
     Введите действие:
 
@@ -210,7 +250,7 @@ while True:
 
 
 
-    Введите номер:   '''))
+    Введите номер:   ''', 'magenta')))
 
                 cls()
 
@@ -233,7 +273,7 @@ while True:
                     print u'Error (◕‿◕)'
 
             elif ask_2 == 2:
-                ask_2_2 = int(input(u'''
+                ask_2_2 = int(input(colored(u'''
 
     Введите действие:
 
@@ -245,7 +285,7 @@ while True:
 
 
 
-    Введите номер:   '''))
+    Введите номер:   ''', 'magenta')))
 
                 cls()
 
@@ -268,7 +308,7 @@ while True:
                     print u'Error (✿◠‿◠) '
 
             elif ask_2 == 3:
-                ask_2_3 = int(input(u'''
+                ask_2_3 = int(input(colored(u'''
 
     Введите действие:
 
@@ -280,7 +320,7 @@ while True:
 
 
 
-    Введите номер:   '''))
+    Введите номер:   ''', 'magenta')))
 
                 cls()
 
@@ -303,7 +343,7 @@ while True:
                     print u'Error |◔◡◉|'
 
             elif ask_2 == 4:
-                ask_2_4 = int(input(u'''
+                ask_2_4 = int(input(colored(u'''
 
     Введите действие:
 
@@ -315,7 +355,7 @@ while True:
 
 
 
-    Введите номер:   '''))
+    Введите номер:   ''','magenta')))
 
                 cls()
 
@@ -338,7 +378,7 @@ while True:
                     print u'Error ◉◡◉'
 
             elif ask_2 == 5:
-                ask_2_5 = int(input(u'''
+                ask_2_5 = int(input(colored(u'''
 
     Введите действие:
 
@@ -350,7 +390,7 @@ while True:
 
 
 
-    Введите номер:   '''))
+    Введите номер:   ''', 'magenta')))
 
                 cls()
 
@@ -373,7 +413,7 @@ while True:
                     print u'Error (✿｡✿)'
 
             elif ask_2 == 6:
-                ask_2_6 = int(input(u'''
+                ask_2_6 = int(input(colored(u'''
 
     Введите действие:
 
@@ -385,7 +425,7 @@ while True:
 
 
 
-    Введите номер:   '''))
+    Введите номер:   ''', 'magenta')))
 
                 cls()
 
@@ -408,7 +448,7 @@ while True:
                     print u'Error (ᵔᴥᵔ)'
 
             elif ask_2 == 7:
-                ask_2_7 = int(input(u'''
+                ask_2_7 = int(input(colored(u'''
 
     Введите действие:
 
@@ -420,7 +460,7 @@ while True:
 
 
 
-    Введите номер:   '''))
+    Введите номер:   ''','magenta')))
 
                 cls()
 
@@ -443,7 +483,7 @@ while True:
                     print u'Error ( ͡° ͜ʖ ͡°)'
 
             elif ask_2 == 8:
-                ask_2_8 = int(input(u'''
+                ask_2_8 = int(input(colored(u'''
 
     Введите действие:
 
@@ -455,7 +495,7 @@ while True:
 
 
 
-    Введите номер:   '''))
+    Введите номер:   ''', 'magenta')))
 
                 cls()
 
@@ -480,7 +520,17 @@ while True:
             else:
                 print u'Error ( ́ ◕◞ε◟◕`) '
 
+        elif ask == 3:
+            print colored(u'''Это список роботов.
+К примеру робот #54: 5 - это номер кампании, 4 это действие\n
+Если робот сработал - он удалится
+Если нет, так и будет висеть
+Если робот все ни как не исчезает, значит вы не выждали паузу и он не может выполнить задачу
+Попробуйте выполнить его еще раз \n\n''','magenta')
+
+            print Query().three()
+
         else:
-            print u'Error (づ￣ ³￣)づ  '
+            print colored(u'Мимо! :] попробуй  еще раз', 'red')
     except ValueError:
-        print u'Номер не валидный'
+        print colored(u'Мимо! :] попробуй  еще раз','red')
