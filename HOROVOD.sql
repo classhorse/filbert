@@ -1,5 +1,12 @@
+USE [wh_data]
+GO
+/****** Object:  StoredProcedure [dbo].[Filbert_HOROVOD]    Script Date: 15.07.2016 11:06:45 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-create procedure Filbert_HOROVOD (@n int)
+ALTER procedure [dbo].[Filbert_HOROVOD] (@n int)
 AS
 BEGIN
 set nocount on; --выключаем счетчик
@@ -22,6 +29,79 @@ insert into @phone (number)
 						where ph.typ = 3
 							and (isnull(d.gmt-4,0) + datepart(hour, getdate())) > 17
 
+					)
+
+declare @promises table (prom int)
+insert into @promises (prom)
+					(
+					select
+						dp.parent_id
+					from
+						i_collect.dbo.debt_promise dp
+					where
+						dp.prom_date > getdate()
+					group by
+						dp.parent_id
+					)
+
+declare @closed table (closed int)
+insert into @closed (closed)
+					(
+					select
+						d.id
+					from
+						i_collect.dbo.debt d
+					where
+						d.status in (6,7,8,10)
+					group by
+						d.id
+					)
+
+declare @fixed table (fix int)
+insert into @fixed (fix)
+					(
+					select
+						wt.r_debt_id
+					from
+						i_collect.dbo.work_task_log as wt
+						left join i_collect.dbo.users as u on wt.r_user_id = u.id
+					where
+						u.id not in (1604, -1)										
+						and wt.id in 
+								(
+								select
+									max(id)
+								from
+									i_collect.dbo.work_task_log
+								group by
+									r_debt_id
+								)
+					group by
+						wt.r_debt_id
+					)
+
+declare @sort table (id int, dt datetime)
+insert into @sort (id, dt)
+					(
+					select
+						cl.r_debt_id
+						,cl.dt
+					from
+						i_collect.dbo.contact_log cl
+					where
+						cl.typ = 1
+						and cl.id in
+								(
+								select
+									max(id)
+								from
+									i_collect.dbo.contact_log
+								group by
+									r_debt_id
+								)		
+					group by
+						cl.r_debt_id
+						,cl.dt			
 					)
 
 ----------------------------------------------------------------------
@@ -51,7 +131,6 @@ insert into @phone (number)
 			,[Дата_перезвона]
 			,[Часовой_пояс]
 			,[Телефон_для_перезвона]
-			,[last_call_dt]
 			,[Телефон6]
 			,[Телефон7]
 			,[Телефон8]
@@ -68,67 +147,14 @@ insert into @phone (number)
 			tc1.*
 		from
 			tmp_campaign_1 tc1
-			left join
-					(
-					select
-						cl.r_debt_id
-						,cl.dt
-					from
-						i_collect.dbo.contact_log cl
-					where
-						cl.typ = 1
-						and cl.id in
-								(
-								select
-									max(id)
-								from
-									i_collect.dbo.contact_log
-								group by
-									r_debt_id
-								)		
-					group by
-						cl.r_debt_id
-						,cl.dt
-			
-					)cl 
-						on cl.r_debt_id = tc1.[ID]
+			left join (select id, dt from @sort)cl on tc1.[ID] = cl.id
 		order by
-			cl.dt asc		
+			cl.dt asc
 
 		;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 			where
-				 [ID] in
-							(
-							select
-								d.id
-							from
-								i_collect.dbo.debt d
-							where
-								d.status in (6,7,8,10)
-							group by
-								d.id
-							)
-				or [ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+				 [ID]in (select closed from @closed)
+				 or [ID] in (select fix from @fixed)
 
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5000081023]
 				set [Телефон1] = null
@@ -210,18 +236,7 @@ insert into @phone (number)
 			and [Телефон15] is null
 
 		;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)
+			where [ID] in (select prom from @promises)
 		end
 
 --------------------------------
@@ -252,7 +267,6 @@ insert into @phone (number)
 				,[Дата_перезвона]
 				,[Часовой_пояс]
 				,[Телефон_для_перезвона]
-				,[last_call_dt]
 				,[Телефон6]
 				,[Телефон7]
 				,[Телефон8]
@@ -268,28 +282,7 @@ insert into @phone (number)
 				tc11.*
 			from
 				tmp_campaign_11 tc11
-				left join
-						(
-						select
-							cl.r_debt_id
-							,cl.dt
-						from
-							i_collect.dbo.contact_log cl
-						where
-							cl.typ = 1
-							and cl.id in
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.contact_log
-									group by
-										r_debt_id
-									)		
-						group by
-							cl.r_debt_id
-							,cl.dt
-						)cl on cl.r_debt_id = tc11.[ID]
+				left join (select id, dt from @sort)cl on tc11.[ID] = cl.id
 			order by
 				cl.dt asc
 
@@ -302,18 +295,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
-			where
-				 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
+			where [ID] in (select closed from @closed)
 
 		end
 
@@ -321,28 +303,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
-			where
-				[ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select fix from @fixed)
 
 		end
 
@@ -433,19 +394,8 @@ insert into @phone (number)
 	else if @n = 15 --удаляем долги с обещаниями
 		begin
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5000081023]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)
-
+			where [ID] in (select prom from @promises)
+			
 		end
 		
 	
@@ -496,68 +446,15 @@ insert into @phone (number)
 			tc2.*
 		from
 			tmp_campaign_2 tc2
-			left join
-					(
-					select
-						cl.r_debt_id
-						,cl.dt
-					from
-						i_collect.dbo.contact_log cl
-					where
-						cl.typ = 1
-						and cl.id in
-								(
-								select
-									max(id)
-								from
-									i_collect.dbo.contact_log
-								group by
-									r_debt_id
-								)		
-					group by
-						cl.r_debt_id
-						,cl.dt
-			
-					)cl
-						on cl.r_debt_id = tc2.[ID]
+			left join (select id, dt from @sort)cl on tc2.[ID] = cl.id
 		order by
 			cl.dt asc
 
 		;delete from
 			[INFINITY2].[Cx_Work].[public].[Table_5000081044]
-		where
-			 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
-			or [ID] in
-						(
-						select
-							wt.r_debt_id
-						from
-							i_collect.dbo.work_task_log as wt
-							left join i_collect.dbo.users as u on wt.r_user_id = u.id
-						where
-							u.id not in (1604, -1)										
-							and wt.id in 
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.work_task_log
-									group by
-										r_debt_id
-									)
-						group by
-							wt.r_debt_id
-						)
+		where [ID] in (select closed from @closed)
+			or [ID] in (select fix from @fixed)
+
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 			set [State] = null
 			where [State] is not null
@@ -644,25 +541,14 @@ insert into @phone (number)
 				and [Телефон15] is null
 
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)
+			where [ID] in (select prom from @promises)
 		end
 
 	else if @n = 21 --сортировка
 		begin
 		if OBJECT_ID ('tmp_campaign_21') is not null
 			drop table tmp_campaign_21
-
+			select * from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 				;select * into tmp_campaign_21 from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 				;delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
 				;insert into [INFINITY2].[Cx_Work].[public].[Table_5000081044]
@@ -700,30 +586,7 @@ insert into @phone (number)
 					tc21.*
 				from
 					tmp_campaign_21 tc21
-					left join
-							(
-							select
-								cl.r_debt_id
-								,cl.dt
-							from
-								i_collect.dbo.contact_log cl
-							where
-								cl.typ = 1
-								and cl.id in
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.contact_log
-										group by
-											r_debt_id
-										)		
-							group by
-								cl.r_debt_id
-								,cl.dt
-			
-							)cl 
-								on cl.r_debt_id = tc21.[ID]
+					left join (select id, dt from @sort)cl on tc21.[ID] = cl.id
 				order by
 					cl.dt asc
 
@@ -738,18 +601,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
-			where
-				 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
+			where [ID] in (select closed from @closed)
 
 		end
 
@@ -757,28 +609,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
-			where
-				[ID] in
-						(
-						select
-							wt.r_debt_id
-						from
-							i_collect.dbo.work_task_log as wt
-							left join i_collect.dbo.users as u on wt.r_user_id = u.id
-						where
-							u.id not in (1604, -1)										
-							and wt.id in 
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.work_task_log
-									group by
-										r_debt_id
-									)
-						group by
-							wt.r_debt_id
-						)
+			where [ID] in (select fix from @fixed)
 
 		end
 
@@ -869,18 +700,7 @@ insert into @phone (number)
 	else if @n = 25 --удаляем долги с обещаниями
 		begin
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5000081044]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)
+			where [ID] in (select prom from @promises)
 
 		end
 	
@@ -928,68 +748,14 @@ insert into @phone (number)
 				tc3.*
 			from
 				tmp_campaign_3 tc3
-				left join
-						(
-						select
-							cl.r_debt_id
-							,cl.dt
-						from
-							i_collect.dbo.contact_log cl
-						where
-							cl.typ = 1
-							and cl.id in
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.contact_log
-									group by
-										r_debt_id
-									)		
-						group by
-							cl.r_debt_id
-							,cl.dt
-			
-						)cl 
-							on cl.r_debt_id = tc3.[ID]
+				left join (select id, dt from @sort)cl on tc3.[ID] = cl.id
 			order by
 				cl.dt asc
 
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5015640658]
-			where
-				 [ID] in
-							(
-							select
-								d.id
-							from
-								i_collect.dbo.debt d
-							where
-								d.status in (6,7,8,10)
-							group by
-								d.id
-							)
-				or [ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select closed from @closed)
+				or [ID] in (select fix from @fixed)
 
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5015640658]
 			set [State] = null
@@ -1076,18 +842,7 @@ insert into @phone (number)
 					and [Телефон15] is null
 
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)
+			where [ID] in (select prom from @promises)
 		end
 
 	else if @n = 31 --сортировка
@@ -1131,30 +886,7 @@ insert into @phone (number)
 					tc31.*
 				from
 					tmp_campaign_31 tc31
-					left join
-							(
-							select
-								cl.r_debt_id
-								,cl.dt
-							from
-								i_collect.dbo.contact_log cl
-							where
-								cl.typ = 1
-								and cl.id in
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.contact_log
-										group by
-											r_debt_id
-										)		
-							group by
-								cl.r_debt_id
-								,cl.dt
-			
-							)cl 
-								on cl.r_debt_id = tc31.[ID]
+					left join (select id, dt from @sort)cl on tc31.[ID] = cl.id
 				order by
 					cl.dt asc
 
@@ -1170,18 +902,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
-			where
-				 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
+			where [ID] in (select closed from @closed)
 
 		end
 
@@ -1189,28 +910,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
-			where
-				[ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select fix from @fixed)
 
 		end
 
@@ -1301,18 +1001,7 @@ insert into @phone (number)
 	else if @n = 35 --удаляем долги с обещаниями
 		begin
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5015640658]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)
+			where [ID] in (select prom from @promises)
 		
 		end
 
@@ -1360,68 +1049,14 @@ insert into @phone (number)
 				tc4.*
 			from
 				tmp_campaign_4 tc4
-				left join
-						(
-						select
-							cl.r_debt_id
-							,cl.dt
-						from
-							i_collect.dbo.contact_log cl
-						where
-							cl.typ = 1
-							and cl.id in
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.contact_log
-									group by
-										r_debt_id
-									)		
-						group by
-							cl.r_debt_id
-							,cl.dt
-			
-						)cl
-							on cl.r_debt_id = tc4.[ID]
+				left join (select id, dt from @sort)cl on tc4.[ID] = cl.id
 			order by
 				cl.dt asc
 
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5042218921]
-			where
-				 [ID] in
-							(
-							select
-								d.id
-							from
-								i_collect.dbo.debt d
-							where
-								d.status in (6,7,8,10)
-							group by
-								d.id
-							)
-				or [ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select closed from @closed)
+				or [ID] in (select fix from @fixed)
 
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5042218921]
 			set [State] = null
@@ -1506,18 +1141,7 @@ insert into @phone (number)
 				and [Телефон14] is null
 				and [Телефон15] is null
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)	
+			where [ID] in (select prom from @promises)
 		end
 
 	else if @n = 41 --сортировка
@@ -1561,30 +1185,7 @@ insert into @phone (number)
 					tc41.*
 				from
 					tmp_campaign_41 tc41
-					left join
-							(
-							select
-								cl.r_debt_id
-								,cl.dt
-							from
-								i_collect.dbo.contact_log cl
-							where
-								cl.typ = 1
-								and cl.id in
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.contact_log
-										group by
-											r_debt_id
-										)		
-							group by
-								cl.r_debt_id
-								,cl.dt
-			
-							)cl on
-								cl.r_debt_id = tc41.[ID]
+					left join (select id, dt from @sort)cl on tc41.[ID] = cl.id
 				order by
 					cl.dt asc
 
@@ -1599,18 +1200,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
-			where
-				 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
+			where [ID] in (select closed from @closed)
 
 		end
 
@@ -1618,28 +1208,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
-			where
-				[ID] in
-						(
-						select
-							wt.r_debt_id
-						from
-							i_collect.dbo.work_task_log as wt
-							left join i_collect.dbo.users as u on wt.r_user_id = u.id
-						where
-							u.id not in (1604, -1)										
-							and wt.id in 
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.work_task_log
-									group by
-										r_debt_id
-									)
-						group by
-							wt.r_debt_id
-						)
+			where [ID] in (select fix from @fixed)
 
 		end
 
@@ -1730,18 +1299,7 @@ insert into @phone (number)
 	else if @n = 45 --удаляем долги с обещаниями
 		begin
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5042218921]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)		
+			where [ID] in (select prom from @promises)	
 		end
 	
 --</district_4>
@@ -1788,68 +1346,14 @@ insert into @phone (number)
 				tc5.*
 			from
 				tmp_campaign_5 tc5
-				left join
-						(
-						select
-							cl.r_debt_id
-							,cl.dt
-						from
-							i_collect.dbo.contact_log cl
-						where
-							cl.typ = 1
-							and cl.id in
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.contact_log
-									group by
-										r_debt_id
-									)		
-						group by
-							cl.r_debt_id
-							,cl.dt
-			
-						)cl
-							on cl.r_debt_id = tc5.[ID]
+				left join (select id, dt from @sort)cl on tc5.[ID] = cl.id
 			order by
 				cl.dt asc
 
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5052709673]
-			where
-					[ID] in
-							(
-							select
-								d.id
-							from
-								i_collect.dbo.debt d
-							where
-								d.status in (6,7,8,10)
-							group by
-								d.id
-							)
-				or [ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select closed from @closed)
+				or [ID] in (select fix from @fixed)
 
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5052709673]
 				set [State] = null
@@ -1935,18 +1439,7 @@ insert into @phone (number)
 				and [Телефон15] is null
 
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)
+			where [ID] in (select prom from @promises)
 		end
 
 
@@ -1991,30 +1484,7 @@ insert into @phone (number)
 					tc51.*
 				from
 					tmp_campaign_51 tc51
-					left join
-							(
-							select
-								cl.r_debt_id
-								,cl.dt
-							from
-								i_collect.dbo.contact_log cl
-							where
-								cl.typ = 1
-								and cl.id in
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.contact_log
-										group by
-											r_debt_id
-										)		
-							group by
-								cl.r_debt_id
-								,cl.dt
-			
-							)cl on 
-								cl.r_debt_id = tc51.[ID]
+					left join (select id, dt from @sort)cl on tc51.[ID] = cl.id
 				order by
 					cl.dt asc
 
@@ -2029,46 +1499,15 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
-			where
-				 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
+			where [ID] in (select closed from @closed)
 
 		end
 
 	else if @n = 53 --удаляем закрепленные
 		begin
+
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
-			where
-				[ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select fix from @fixed)
 
 		end
 
@@ -2159,18 +1598,7 @@ insert into @phone (number)
 	else if @n = 55 --удаляем долги с обещаниями
 		begin
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5052709673]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)		
+			where [ID] in (select prom from @promises)	
 		end
 	
 --</district_5>
@@ -2217,68 +1645,14 @@ insert into @phone (number)
 				tc6.*
 			from
 				tmp_campaign_6 tc6
-				left join
-						(
-						select
-							cl.r_debt_id
-							,cl.dt
-						from
-							i_collect.dbo.contact_log cl
-						where
-							cl.typ = 1
-							and cl.id in
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.contact_log
-									group by
-										r_debt_id
-									)		
-						group by
-							cl.r_debt_id
-							,cl.dt
-			
-						)cl 
-							on cl.r_debt_id = tc6.[ID]
+				left join (select id, dt from @sort)cl on tc6.[ID] = cl.id
 			order by
 				cl.dt asc
 
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5064249944]
-			where
-					[ID] in
-							(
-							select
-								d.id
-							from
-								i_collect.dbo.debt d
-							where
-								d.status in (6,7,8,10)
-							group by
-								d.id
-							)
-				or [ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select closed from @closed)
+				or [ID] in (select fix from @fixed)
 
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5064249944]
 				set [State] = null
@@ -2364,18 +1738,7 @@ insert into @phone (number)
 				and [Телефон15] is null
 
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)
+			where [ID] in (select prom from @promises)
 		end
 		
 
@@ -2421,30 +1784,7 @@ insert into @phone (number)
 					tc61.*
 				from
 					tmp_campaign_61 tc61
-					left join
-							(
-							select
-								cl.r_debt_id
-								,cl.dt
-							from
-								i_collect.dbo.contact_log cl
-							where
-								cl.typ = 1
-								and cl.id in
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.contact_log
-										group by
-											r_debt_id
-										)
-							group by
-								cl.r_debt_id
-								,cl.dt
-			
-							)cl
-								on cl.r_debt_id = tc61.[ID]
+					left join (select id, dt from @sort)cl on tc61.[ID] = cl.id
 				order by
 					cl.dt asc
 
@@ -2459,18 +1799,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
-			where
-				 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
+			where [ID] in (select closed from @closed)
 
 		end
 
@@ -2478,28 +1807,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
-			where
-				[ID] in
-						(
-						select
-							wt.r_debt_id
-						from
-							i_collect.dbo.work_task_log as wt
-							left join i_collect.dbo.users as u on wt.r_user_id = u.id
-						where
-							u.id not in (1604, -1)										
-							and wt.id in
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.work_task_log
-									group by
-										r_debt_id
-									)
-						group by
-							wt.r_debt_id
-						)
+			where [ID] in (select fix from @fixed)
 
 		end
 
@@ -2590,18 +1898,7 @@ insert into @phone (number)
 	else if @n = 65 -- удаляем долги с обещаниями
 		begin
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5064249944]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-						)	
+			where [ID] in (select prom from @promises)
 		end
 	
 --</district_6>
@@ -2648,67 +1945,15 @@ insert into @phone (number)
 				tc7.*
 			from
 				tmp_campaign_7 tc7
-				left join
-						(
-						select
-							cl.r_debt_id
-							,cl.dt
-						from
-							i_collect.dbo.contact_log cl
-						where
-							cl.typ = 1
-							and cl.id in
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.contact_log
-									group by
-										r_debt_id
-									)		
-						group by
-							cl.r_debt_id
-							,cl.dt
-			
-						)cl on cl.r_debt_id = d.id
+				left join (select id, dt from @sort)cl on tc7.[ID] = cl.id
 			order by
 				cl.dt asc
 
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5068758013]
-			where
-				 [ID] in
-							(
-							select
-								d.id
-							from
-								i_collect.dbo.debt d
-							where
-								d.status in (6,7,8,10)
-							group by
-								d.id
-							)
-				or [ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select closed from @closed)
+				or [ID] in (select fix from @fixed)
+
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5068758013]
 				set [State] = null
 				where [State] is not null
@@ -2793,19 +2038,7 @@ insert into @phone (number)
 				and [Телефон15] is null
 
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-
-						)
+			where [ID] in (select prom from @promises)
 		end
 		
 	else if @n = 71 --сортировка
@@ -2848,30 +2081,7 @@ insert into @phone (number)
 					tc71.*
 				from
 					tmp_campaign_71 tc71
-					left join
-							(
-							select
-								cl.r_debt_id
-								,cl.dt
-							from
-								i_collect.dbo.contact_log cl
-							where
-								cl.typ = 1
-								and cl.id in
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.contact_log
-										group by
-											r_debt_id
-										)		
-							group by
-								cl.r_debt_id
-								,cl.dt
-			
-							)cl on 
-								cl.r_debt_id = tc71.[ID]
+					left join (select id, dt from @sort)cl on tc71.[ID] = cl.id
 				order by
 					cl.dt asc
 
@@ -2886,18 +2096,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
-			where
-				 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
+			where [ID] in (select closed from @closed)
 
 		end
 
@@ -2905,28 +2104,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
-			where
-				[ID] in
-						(
-						select
-							wt.r_debt_id
-						from
-							i_collect.dbo.work_task_log as wt
-							left join i_collect.dbo.users as u on wt.r_user_id = u.id
-						where
-							u.id not in (1604, -1)										
-							and wt.id in 
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.work_task_log
-									group by
-										r_debt_id
-									)
-						group by
-							wt.r_debt_id
-						)
+			where [ID] in (select fix from @fixed)
 
 		end
 
@@ -3018,19 +2196,7 @@ insert into @phone (number)
 	else if @n = 75 --удаляем долги с обещаниями
 		begin
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5068758013]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-
-						)
+			where [ID] in (select prom from @promises)
 		end
 			
 --</district_7>
@@ -3077,68 +2243,14 @@ insert into @phone (number)
 				tc8.*
 			from
 				tmp_campaign_8 tc8
-				left join
-						(
-						select
-							cl.r_debt_id
-							,cl.dt
-						from
-							i_collect.dbo.contact_log cl
-						where
-							cl.typ = 1
-							and cl.id in
-									(
-									select
-										max(id)
-									from
-										i_collect.dbo.contact_log
-									group by
-										r_debt_id
-									)		
-						group by
-							cl.r_debt_id
-							,cl.dt
-			
-						)cl 
-							on cl.r_debt_id = tc8.[ID]
+				left join (select id, dt from @sort)cl on tc8.[ID] = cl.id
 			order by
 				cl.dt asc
 
 			;delete from 
 				[INFINITY2].[Cx_Work].[public].[Table_5336960870]
-			where
-				 [ID] in
-							(
-							select
-								d.id
-							from
-								i_collect.dbo.debt d
-							where
-								d.status in (6,7,8,10)
-							group by
-								d.id
-							)
-				or [ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select closed from @closed)
+				or [ID] in (select fix from @fixed)
 
 			;UPDATE [INFINITY2].[Cx_Work].[public].[Table_5336960870]
 				set [State] = null
@@ -3224,19 +2336,7 @@ insert into @phone (number)
 				and [Телефон15] is null
 
 			;delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-
-						)
+			where [ID] in (select prom from @promises)
 		end
 		
 
@@ -3280,30 +2380,7 @@ insert into @phone (number)
 					tc81.*
 				from
 					tmp_campaign_81 tc81
-					left join
-							(
-							select
-								cl.r_debt_id
-								,cl.dt
-							from
-								i_collect.dbo.contact_log cl
-							where
-								cl.typ = 1
-								and cl.id in
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.contact_log
-										group by
-											r_debt_id
-										)		
-							group by
-								cl.r_debt_id
-								,cl.dt
-			
-							)cl 
-								on cl.r_debt_id = tc81.[ID]
+					left join (select id, dt from @sort)cl on tc81.[ID] = cl.id
 				order by
 					cl.dt asc
 
@@ -3316,19 +2393,9 @@ insert into @phone (number)
 
 	else if @n = 82 --удаляем закрытые дела
 		begin
+
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
-			where
-				 [ID] in
-						(
-						select
-							d.id
-						from
-							i_collect.dbo.debt d
-						where
-							d.status in (6,7,8,10)
-						group by
-							d.id
-						)
+			where [ID] in (select closed from @closed)
 
 		end
 
@@ -3336,28 +2403,7 @@ insert into @phone (number)
 		begin
 
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
-			where
-				[ID] in
-							(
-							select
-								wt.r_debt_id
-							from
-								i_collect.dbo.work_task_log as wt
-								left join i_collect.dbo.users as u on wt.r_user_id = u.id
-							where
-								u.id not in (1604, -1)										
-								and wt.id in 
-										(
-										select
-											max(id)
-										from
-											i_collect.dbo.work_task_log
-										group by
-											r_debt_id
-										)
-							group by
-								wt.r_debt_id
-							)
+			where [ID] in (select fix from @fixed)
 
 		end
 
@@ -3446,26 +2492,14 @@ insert into @phone (number)
 		end
 
 	else if @n = 85 --удаляем долги с обещаниями
+
 		begin
 			delete from [INFINITY2].[Cx_Work].[public].[Table_5336960870]
-			where
-				[ID] in
-						(
-						select
-							dp.parent_id
-						from
-							i_collect.dbo.debt_promise dp
-						where
-							dp.prom_date > getdate()
-						group by
-							dp.parent_id
-
-						)
+			where [ID] in (select prom from @promises)
 		end
 			
 --</district_8>
 ----------------------------------------------------------------------
 set nocount off
-END
-GO
 
+END
