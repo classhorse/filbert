@@ -17,10 +17,10 @@ class Query(object):
     """SQL Query from Database: i_collect"""
     job = """
    select distinct
-    sj.name
-    ,sjh.run_date
-    ,sjh.run_time
-    ,iif(sjs.last_run_outcome = 0, 'Error!!! make a pause', 'Wait') result
+    sj.name Name
+    ,sjh.run_date Date
+    ,sjh.run_time Time
+    ,iif(sjs.last_run_outcome = 0, 'Error!!! make a pause', 'Wait') Status
 from
     msdb.dbo.sysjobs sj
     left join msdb.dbo.sysjobhistory sjh on sj.job_id = sjh.job_id
@@ -67,7 +67,7 @@ user = getpass.getuser()
 
 
 
-print colored(u'Привет', 'yellow'), user, colored(u', Добро пожаловать в систему ', 'yellow')
+print colored(u'Привет', 'cyan'), user, colored(u', Добро пожаловать в систему ', 'cyan')
 time.sleep(1.4)
 
 color_a()
@@ -175,7 +175,7 @@ while True:
 
 
 
-    Введите номер:  ''', 'yellow')))
+    Введите номер:  ''', 'cyan')))
         cls()
         if ask == 1:
             ask_1 = int(input(colored(u'''
@@ -189,7 +189,7 @@ while True:
 
 
 
-    Введите номер:  ''', 'yellow')))
+    Введите номер:  ''', 'white')))
 
             cls()
 
@@ -218,7 +218,7 @@ while True:
                 Horovod('8')
                 print done
             else:
-                print u'Error  ¯\_(ツ)_/¯'
+                print colored(u'Error  ¯\_(ツ)_/¯', 'red')
 
 
         elif ask == 2:
@@ -233,7 +233,7 @@ while True:
 
 
 
-    Введите номер:  ''', 'yellow')))
+    Введите номер:  ''', 'cyan')))
 
             cls()
 
@@ -250,7 +250,7 @@ while True:
 
 
 
-    Введите номер:   ''', 'magenta')))
+    Введите номер:   ''', 'cyan')))
 
                 cls()
 
@@ -270,7 +270,7 @@ while True:
                     Horovod('15')
                     print done
                 else:
-                    print u'Error (◕‿◕)'
+                    print colored(u'Error  ¯\_(ツ)_/¯', 'red')
 
             elif ask_2 == 2:
                 ask_2_2 = int(input(colored(u'''
@@ -285,7 +285,7 @@ while True:
 
 
 
-    Введите номер:   ''', 'magenta')))
+    Введите номер:   ''', 'cyan')))
 
                 cls()
 
@@ -305,7 +305,7 @@ while True:
                     Horovod('25')
                     print done
                 else:
-                    print u'Error (✿◠‿◠) '
+                    print colored(u'Error  ¯\_(ツ)_/¯', 'red')
 
             elif ask_2 == 3:
                 ask_2_3 = int(input(colored(u'''
@@ -320,7 +320,7 @@ while True:
 
 
 
-    Введите номер:   ''', 'magenta')))
+    Введите номер:   ''', 'cyan')))
 
                 cls()
 
@@ -340,7 +340,7 @@ while True:
                     Horovod('35')
                     print done
                 else:
-                    print u'Error |◔◡◉|'
+                    print colored(u'Error  ¯\_(ツ)_/¯', 'red')
 
             elif ask_2 == 4:
                 ask_2_4 = int(input(colored(u'''
@@ -355,7 +355,7 @@ while True:
 
 
 
-    Введите номер:   ''','magenta')))
+    Введите номер:   ''','cyan')))
 
                 cls()
 
@@ -375,7 +375,7 @@ while True:
                     Horovod('45')
                     print done
                 else:
-                    print u'Error ◉◡◉'
+                    print colored(u'Error  ¯\_(ツ)_/¯', 'red')
 
             elif ask_2 == 5:
                 ask_2_5 = int(input(colored(u'''
@@ -390,7 +390,7 @@ while True:
 
 
 
-    Введите номер:   ''', 'magenta')))
+    Введите номер:   ''', 'cyan')))
 
                 cls()
 
@@ -410,7 +410,7 @@ while True:
                     Horovod('55')
                     print done
                 else:
-                    print u'Error (✿｡✿)'
+                    print colored(u'Error  ¯\_(ツ)_/¯', 'red')
 
             elif ask_2 == 6:
                 ask_2_6 = int(input(colored(u'''
@@ -425,7 +425,7 @@ while True:
 
 
 
-    Введите номер:   ''', 'magenta')))
+    Введите номер:   ''', 'cyan')))
 
                 cls()
 
@@ -445,7 +445,7 @@ while True:
                     Horovod('65')
                     print done
                 else:
-                    print u'Error (ᵔᴥᵔ)'
+                    print colored(u'Мимо! попробуй еще раз (= ', 'red')
 
             elif ask_2 == 7:
                 ask_2_7 = int(input(colored(u'''
@@ -460,7 +460,7 @@ while True:
 
 
 
-    Введите номер:   ''','magenta')))
+    Введите номер:   ''','cyan')))
 
                 cls()
 
@@ -480,7 +480,7 @@ while True:
                     Horovod('75')
                     print done
                 else:
-                    print u'Error ( ͡° ͜ʖ ͡°)'
+                    print colored(u'Error  ¯\_("/)_/¯', 'red')
 
             elif ask_2 == 8:
                 ask_2_8 = int(input(colored(u'''
@@ -495,7 +495,7 @@ while True:
 
 
 
-    Введите номер:   ''', 'magenta')))
+    Введите номер:   ''', 'cyan')))
 
                 cls()
 
@@ -515,22 +515,28 @@ while True:
                     Horovod('85')
                     print done
                 else:
-                    print u'Error (づ｡◕‿‿◕｡)づ '
+                    print colored(u'Error  ¯\_("/)_/¯', 'red')
 
             else:
-                print u'Error ( ́ ◕◞ε◟◕`) '
+                print colored(u'Мимо! попробуй еще раз (= ', 'red')        
 
         elif ask == 3:
-            print colored(u'''Это список роботов.
-К примеру робот #54: 5 - это номер кампании, 4 это действие\n
-Если робот сработал - он удалится
-Если нет, так и будет висеть
-Если робот все ни как не исчезает, значит вы не выждали паузу и он не может выполнить задачу
-Попробуйте выполнить его еще раз \n\n''','magenta')
+            print colored(u'''
 
-            print Query().three()
+Робот номер 54, расшифровывается вот так:
+5 - это номер кампании, 4 это действие (удаление рабочих)
+
+Если робот сработал успешно - он удалится.
+
+Если Status = Wait, значит он выполняется
+Если Status = Error, значит вы не выждали паузу,
+и робот не может выполнить задачу
+
+Попробуйте выполнить его еще раз (:\n\n''', 'cyan')
+
+            print colored(Query().three(), 'magenta')
 
         else:
-            print colored(u'Мимо! :] попробуй  еще раз', 'red')
+            print colored(u'Error  ¯\_("/)_/¯', 'red')
     except ValueError:
-        print colored(u'Мимо! :] попробуй  еще раз','red')
+        print colored(u'Error  ¯\_("/)_/¯', 'red')
