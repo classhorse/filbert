@@ -7,6 +7,9 @@ import getpass
 from colorama import init
 from termcolor import colored
 import time
+import xlrd
+import xlwt
+from tkinter import *
 sys.stdout = codecs.getwriter('cp866')(sys.stdout,'replace') #подключаем русский язык
 init()
 
@@ -27,6 +30,7 @@ row5 = colored(u'█─██─██ ─── ██─██─██─█�
 row6 = colored(u'█─────█ ─── █───█─██─██─██───█─█─██─████─█─██───██─██───█─█─██','red')
 row7 = colored(u'█████─█ ─── ██████████████████████████████████████████████████','red')
 
+bpl = '' #используется для конкатенации (тут банк и портфель)
 
 
 class QiHi(object):
@@ -122,15 +126,15 @@ bank = u'''
     '''
 portfolio = u'''
     SELECT DISTINCT
-        id
-        ,N''+ name as name
+        p.id
+        ,N''+ p.name as name
     FROM
-        i_collect.dbo.portfolio
+        i_collect.dbo.portfolio p
     WHERE
-        status = 2
-        and parent_id {}
+        p.status = 2
+        and p.parent_id {}
     ORDER BY
-        N'' + name asc
+        N'' + p.name asc
     '''
 
 phone_typ = u'''
@@ -246,11 +250,10 @@ class ModuleList(object):
             having
                 sum(dp2.kol_ob) %s
             )dp
-                on d.id = dp.parent_id\n''', colored(u'даты и количество обещаний', 'yellow'),
-                     (colored(u'даты', 'yellow'), colored(u'количество', 'yellow'))]
+                on d.id = dp.parent_id\n''', colored(u'даты и количество обещаний', 'green'),
+                     (colored(u'даты', 'magenta'), colored(u'количество', 'magenta'))]
 
             , 'miss_prom': [u'''
-
     inner join
             (
             select
@@ -264,11 +267,10 @@ class ModuleList(object):
                 dp.parent_id
             having count(dp.id) %s
             )dp_miss
-                on dp_miss.parent_id = d.id\n''', colored(u'даты и количество пропущенных обещаний', 'yellow'),
-                            (colored(u'даты', 'yellow'), colored(u'количество', 'yellow'))]
+                on dp_miss.parent_id = d.id\n''', colored(u'даты и количество пропущенных обещаний', 'green'),
+                            (colored(u'даты', 'magenta'), colored(u'количество', 'magenta'))]
 
             , 'calc': [u'''
-
     inner join
             (
             select
@@ -315,11 +317,10 @@ class ModuleList(object):
                     sum(dc2.PP_kolvo) %s
                     and sum(dc2.PP_sum) %s
             )dc
-                on dc.parent_id = d.id''', colored(u'даты оплат, суммы и количество', 'yellow'),
-                       (colored(u'даты', 'yellow'), colored(u'суммы', 'yellow'), colored(u'количество', 'yellow'))]
+                on dc.parent_id = d.id''', colored(u'даты оплат, суммы и количество', 'green'),
+                       (colored(u'даты', 'magenta'), colored(u'суммы', 'magenta'), colored(u'количество', 'magenta'))]
 
             , 'phone': [u'''
-
     inner join
             (
             /*return parametres phone numbers*/
@@ -331,9 +332,8 @@ class ModuleList(object):
             where
                 ph.typ %s
                 and ph.status %s
-
             )ph
-                on ph.parent_id = per.id''', colored(u'тип телефона и статус', 'yellow'), (colored(u'''
+                on ph.parent_id = per.id''', colored(u'тип телефона и статус', 'green'), (colored(u'''
 1   Мобильный
 2   Домашний
 3   Рабочий
@@ -354,7 +354,7 @@ class ModuleList(object):
 205 Созаемщик-Мобильный
 206 Созаемщик-Рабочий
 
-phone.typ''', 'cyan'), colored(u'''
+phone.typ''', 'magenta'), colored(u'''
 1   Не звонили ни разу
 2   Результата не было
 3   Неверный номер
@@ -362,10 +362,9 @@ phone.typ''', 'cyan'), colored(u'''
 5   Последний результат
 6   Автоинформатор
 
-phone.status''', 'cyan'))]
+статус телефона''', 'magenta'))]
 
             , 'perspect': [u'''
-
 inner join
         (
         select
@@ -418,22 +417,19 @@ inner join
         having count(c.id) %s
         )persp
             on persp.r_debt_id = d.id\n''',
-                            colored(u'даты и количество перспективных контактов', 'yellow'),
-                            (colored(u'даты', 'yellow'), colored(u'количество', 'yellow'))]
+                            colored(u'даты и количество перспективных контактов', 'green'),
+                            (colored(u'даты', 'magenta'), colored(u'количество', 'magenta'))]
 
         }
 
         self.concate = u'''
 SELECT top 10
-
     count(d.id)
-
 FROM
     i_collect.dbo.bank as b
     inner join i_collect.dbo.portfolio as p on b.id = p.parent_id
     inner join i_collect.dbo.debt as d on p.id = d.r_portfolio_id
     inner join i_collect.dbo.person as per on d.parent_id = per.id
-
 '''
 
 
@@ -441,7 +437,7 @@ FROM
 
         """ concatenate SQL parts """
 
-        print colored(u'\nТеперь выбираем модули\nПросто напиши через запятую модули, которые будешь использовать\n\n\n', 'green')
+        print colored(u'\nТеперь выбираем модули\nПросто напиши через запятую модули, которые будешь использовать\n\n\n' , 'green')
         for k, v in sorted(self.try_dict.items()):
             print '\n', k, colored('-', 'magenta'), v[1]
 
@@ -519,26 +515,44 @@ class ForTheStartWeMust(object):
 
 
 
+
 class BankAndPortfParam(object):
 
     """Param bank and portfolio string for concatenate"""
 
-    bank_and_portf_param = None
     bank_list = u'\nWHERE\n     b.id {}\n'  # первое условие со списком банков
-    portfolio_list = u'         and p.id {0}\n'  # условие
-    bank_inp = ''
-    port_inp = ''
+    portfolio_list = u'     and p.id {0}\n'  # условие
+    bank_inp = None
+    port_inp = None
+
 
     def bank(self):
+        global bpl
         print QueryICollect(bank).two  # показываем список открытых банков
         bank_input = raw_input(colored(u'\nБанк(-и):   ', 'magenta'))  # выбираем список банков
-        self.bank_inp = self.bank_list.format(bank_input)
+        bpl += self.bank_list.format(bank_input)
         cls()
 
-
-    def portf(self):
-        print QueryICollect(portfolio.format(self.bank_inp)).two  # показываем список портфелей выбранных банков
+        print QueryICollect(portfolio.format(bank_input)).two  # показываем список портфелей выбранных банков
         self.port_inp = raw_input(colored(u'\nПортфель(-и):  ', 'magenta'))  # выбираем список портфелей
+        bpl += self.portfolio_list.format(self.port_inp)
+        cls()
+
+    def ret(self):
+        return bpl
+
+
+    # def portf(self):
+    #     p = QueryICollect(portfolio).one
+    #     print p
+    #
+    #     print QueryICollect(portfolio.format(self.bank_inp)).two  # показываем список портфелей выбранных банков
+    #     #self.port_inp = raw_input(colored(u'\nПортфель(-и):  ', 'magenta'))  # выбираем список портфелей
+
+
+
+
+
 
 
 
@@ -546,28 +560,21 @@ class BankAndPortfParam(object):
 
 
 
-class Main(object):
+def Main():
 
     """Start Main() of Q-Interpreter"""
 
-    x = None
 
-    animation = QiHi().qi_rus()  #Animnation
-    predicats = Predicats().show_predicats() #показываем SQL предикаты
-    after_animation = FirstStepAfterAnimation().start_or_not() #продолжаем работать с программой
-    show_we_must = ForTheStartWeMust().start_func() #показываем для начала выбрать банк и портфель
-    first_concate = ModuleList().concatenator()
+    QiHi().qi_rus()  #Animnation
+    Predicats().show_predicats() #показываем SQL предикаты
+    FirstStepAfterAnimation().start_or_not() #продолжаем работать с программой
+    ForTheStartWeMust().start_func() #показываем для начала выбрать банк и портфель
+    BankAndPortfParam().bank() #выбираем банки и портфели
 
-    def first_start(self):
-        self.animation()
-        self.predicats()
-        self.after_animation()
-        self.show_we_must()
-        BankAndPortfParam()
 
-    def full_query(self):
-        x = self.first_concate + BankAndPortfParam().bank_inp + BankAndPortfParam().port_inp
-        print x
+
+    x = ModuleList().concatenator() + bpl
+    print x
 
 
 if __name__ == '__main__':
