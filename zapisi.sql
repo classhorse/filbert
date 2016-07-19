@@ -8,6 +8,12 @@ http://vkontakte.doguran.ru/perecherknutyj-tekst-vkontakte.php -- ̶в̶о̶т̶
 --pypyODBC
 http://snakeproject.ru/rubric/article.php?art=python_pyodbc --doka
 
+select top 10
+	id
+	, N''+name as name
+from 
+	debt
+
 --пароль от актов
 202321
 
