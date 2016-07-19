@@ -250,8 +250,10 @@ class ModuleList(object):
             having
                 sum(dp2.kol_ob) %s
             )dp
-                on d.id = dp.parent_id\n''', colored(u'даты и количество обещаний', 'green'),
-                     (colored(u'даты', 'magenta'), colored(u'количество', 'magenta'))]
+                on d.id = dp.parent_id\n''',
+                     colored(u'даты регистрации и количество обещаний ', 'green'),
+                     (colored(u'даты регистрации', 'magenta'),
+                      colored(u'количество', 'magenta'))]
 
             , 'miss_prom': [u'''
     inner join
@@ -267,8 +269,10 @@ class ModuleList(object):
                 dp.parent_id
             having count(dp.id) %s
             )dp_miss
-                on dp_miss.parent_id = d.id\n''', colored(u'даты и количество пропущенных обещаний', 'green'),
-                            (colored(u'даты', 'magenta'), colored(u'количество', 'magenta'))]
+                on dp_miss.parent_id = d.id\n''',
+                            colored(u'даты и количество пропущенных обещаний', 'green'),
+                            (colored(u'даты', 'magenta'),
+                             colored(u'количество', 'magenta'))]
 
             , 'calc': [u'''
     inner join
@@ -317,8 +321,11 @@ class ModuleList(object):
                     sum(dc2.PP_kolvo) %s
                     and sum(dc2.PP_sum) %s
             )dc
-                on dc.parent_id = d.id''', colored(u'даты оплат, суммы и количество', 'green'),
-                       (colored(u'даты', 'magenta'), colored(u'суммы', 'magenta'), colored(u'количество', 'magenta'))]
+                on dc.parent_id = d.id''',
+                       colored(u'даты оплат, суммы и количество', 'green'),
+                       (colored(u'даты', 'magenta'),
+                        colored(u'суммы', 'magenta'),
+                        colored(u'количество', 'magenta'))]
 
             , 'phone': [u'''
     inner join
@@ -333,7 +340,8 @@ class ModuleList(object):
                 ph.typ %s
                 and ph.status %s
             )ph
-                on ph.parent_id = per.id''', colored(u'тип телефона и статус', 'green'), (colored(u'''
+                on ph.parent_id = per.id''',
+                        colored(u'тип телефона и статус', 'green'), (colored(u'''
 1   Мобильный
 2   Домашний
 3   Рабочий
@@ -354,7 +362,7 @@ class ModuleList(object):
 205 Созаемщик-Мобильный
 206 Созаемщик-Рабочий
 
-phone.typ''', 'magenta'), colored(u'''
+тип телефона''', 'magenta'), colored(u'''
 1   Не звонили ни разу
 2   Результата не было
 3   Неверный номер
@@ -417,7 +425,8 @@ inner join
         having count(c.id) %s
         )persp
             on persp.r_debt_id = d.id\n''',
-                            colored(u'даты и количество перспективных контактов', 'green'),
+                            colored(u'даты и количество '
+                                    u'перспективных контактов по долгу', 'green'),
                             (colored(u'даты', 'magenta'), colored(u'количество', 'magenta'))]
 
         }
@@ -437,7 +446,8 @@ FROM
 
         """ concatenate SQL parts """
 
-        print colored(u'\nТеперь выбираем модули\nПросто напиши через запятую модули, которые будешь использовать\n\n\n' , 'green')
+        print colored(u'\nТеперь выбираем модули\nПросто напиши '
+                      u'через запятую модули, которые будешь использовать\n\n\n' , 'green')
         for k, v in sorted(self.try_dict.items()):
             print '\n', k, colored('-', 'magenta'), v[1]
 
@@ -466,8 +476,10 @@ class Predicats(object):
 
     def show_predicats(self):
             print colored(u'\n\nПриветствую тебя', 'yellow')\
-                , user, colored(u'\nДобро пожаловать в систему Q-Interpreter 0.1\n', 'yellow')
-            print colored(u'\n\n\n\n\nИспользуй стандартные SQL предикаты для парамтризации, такие как:\n','green')
+                , user, colored(u'\nДобро пожаловать в '
+                                u'систему Q-Interpreter 0.1\n', 'yellow')
+            print colored(u'\n\n\n\n\nИспользуй стандартные '
+                          u'SQL предикаты для парамтризации, такие как:\n','green')
             print colored(u'in', 'magenta')\
                 ,u'список, например', \
                 colored('in (49, 14)', 'magenta')
@@ -482,7 +494,8 @@ class Predicats(object):
             print colored(u'!<', 'magenta'), u'не меньше'
             print colored(u'!>', 'magenta'), u'не больше'
             print colored(u'between', 'magenta')\
-                , u"между, например", colored(u"between '01-01-2015' and 07-07-2016", 'magenta')
+                , u"между, например", colored(u"between '01-01-2015' "
+                                              u"and 07-07-2016", 'magenta')
 
 
 class FirstStepAfterAnimation(object):
@@ -512,6 +525,7 @@ class ForTheStartWeMust(object):
 
     def start_func(self):
         print colored(self.start, 'green')
+        time.sleep(1.4)
 
 
 
@@ -542,22 +556,49 @@ class BankAndPortfParam(object):
         return bpl
 
 
-    # def portf(self):
-    #     p = QueryICollect(portfolio).one
-    #     print p
-    #
-    #     print QueryICollect(portfolio.format(self.bank_inp)).two  # показываем список портфелей выбранных банков
-    #     #self.port_inp = raw_input(colored(u'\nПортфель(-и):  ', 'magenta'))  # выбираем список портфелей
-
-
-
-
-
-
 
 
 #TODO тут будет второй concatenator
 
+class ModuleList2(object):
+
+    """concatenate application* part of SQL queries"""
+
+    first_query = None
+
+    def __init__(self):
+        self.try_dict = {
+
+        'bank_dpd': [u'     and ', colored(u'банковская просрочка', 'green'),
+                     (colored(u'даты', 'magenta'), colored(u'количество', 'magenta'))]
+
+        }
+
+    def concatenator_2(self):
+        """ concatenate SQL parts """
+
+        print colored(u'\nТеперь выбираем модули\nПросто напиши через запятую модули, которые будешь использовать\n\n\n',
+                      'green')
+        for k, v in sorted(self.try_dict.items()):
+            print '\n', k, colored('-', 'magenta'), v[1]
+
+        r = raw_input(colored(u'\n\n\n\nimport: ', 'magenta'))
+        print u'\n'
+        r = r.replace(' ', '').split(',')
+
+        result_query = self.concate
+        for module in r:
+            if module in self.try_dict:
+                query, description, fields = self.try_dict[module]
+                params = []
+                print description
+                for field in fields:
+                    value = raw_input('%s : ' % field)
+                    params.append(value)
+                query = query % tuple(params)
+                result_query = u'\n'.join([result_query, query])
+        self.first_query = result_query
+        return result_query
 
 
 def Main():
