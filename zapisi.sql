@@ -49,6 +49,24 @@ abs(checksum(newid()))
 --автоинформаторы
 45, 145,146,147,164,165
 
+--цвета debt.int_color
+1  - серый
+2  - ярко красный
+3  - бледно красный
+4  - ярко оранжевый
+5  - бледно оранжевый
+6  - ярко желтый
+7  - бледно желтый
+8  - ярко зеленый
+9  - бледно зеленый
+10 - ярко голубой
+11 - синий
+12 - фиолетовый
+13 - ярко розовый
+14 - бледно розовый
+
+
+
 --Кампании Дайлер:
 Table_5000081023 1
 Table_5000081044 2
@@ -122,26 +140,28 @@ FROM
 				i_collect.dbo.debt_promise as dp
 				left join
 						(
-							select
-								dp2.id as id,
+						select
+							dp2.id as id,
 
-								(case 
-									when (dp2.prom_sum is not null ) 
-									then dp2.prom_sum 				
-									else 0 
-								end) as OP_sum,
+							(case 
+								when (dp2.prom_sum is not null ) 
+								then dp2.prom_sum 				
+								else 0 
+							end) as OP_sum,
 
-								(case 
-									when (dp2.prom_sum is not null) 
-									then 1 
-									else 0 
-								end) as kol_ob
-							from 								
-								i_collect.dbo.debt_promise as dp2
-							group by
-								dp2.id,
-								dp2.prom_sum
-						)dp2 	on dp2.id=dp.id
+							(case 
+								when (dp2.prom_sum is not null) 
+								then 1 
+								else 0 
+							end) as kol_ob
+						from 								
+							i_collect.dbo.debt_promise as dp2
+						group by
+							dp2.id,
+							dp2.prom_sum
+
+						)dp2
+							on dp2.id=dp.id
 			group by 
 				dp.parent_id
 			)dp on d.id = dp.parent_id
@@ -158,44 +178,46 @@ FROM
 				[i_collect].[dbo].[debt_calc] as dc
 				left join 
 						(
-							select 
-									dc2.id as id,
+						select 
+								dc2.id as id,
 
-									(case 
-										when 
-											(
-												dc2.int_sum is not null 
-												and dc2.is_confirmed = 1 
-												and dc2.is_cancel = 0
-											)
-										then dc2.int_sum
-										else 0
-									end) as PP_sum,				
+								(case 
+									when 
+										(
+										dc2.int_sum is not null 
+										and dc2.is_confirmed = 1
+										and dc2.is_cancel = 0
+										)
+									then dc2.int_sum
+									else 0
+								end) as PP_sum,				
 
-									(case 
-										when 
-											(
-												dc2.int_sum is not null 
-												and dc2.is_confirmed = 1 
-												and dc2.is_cancel = 0
-											)
-										then 1
-										else 0 
-									end) as PP_kolvo	
+								(case 
+									when 
+										(
+										dc2.int_sum is not null 
+										and dc2.is_confirmed = 1 
+										and dc2.is_cancel = 0
+										)
+									then 1
+									else 0 
+								end) as PP_kolvo	
 
-							from 
-								[i_collect].[dbo].[debt_calc] as dc2
+						from 
+							[i_collect].[dbo].[debt_calc] as dc2
 
-							group by							 
-								dc2.is_confirmed,
-								dc2.int_sum,
-								dc2.id,
-								dc2.is_cancel
-							) dc2 on dc2.id=dc.id			
+						group by							 
+							dc2.is_confirmed,
+							dc2.int_sum,
+							dc2.id,
+							dc2.is_cancel
+						) dc2 on dc2.id=dc.id			
 
 				group by
 					dc.parent_id
-				) dc on dc.parent_id = d.id
+
+				) dc 
+					on dc.parent_id = d.id
 
 
 
@@ -238,15 +260,18 @@ FROM
 				i_collect.dbo.debt_discount as dd
 				inner join
 						(
-							select
-								id,
-								name
-							from
-								i_collect.dbo.discount
-							where
-								name like 'Прощение долга ББ 1'
-						)dis 	on dd.r_discount_id = dis.id
-			)dd 	on d.id = dd.r_debt_id
+						select
+							id,
+							name
+						from
+							i_collect.dbo.discount
+						where
+							name like 'Прощение долга ББ 1'
+						)dis
+							on dd.r_discount_id = dis.id
+
+			)dd
+				on d.id = dd.r_debt_id
 
 
 
