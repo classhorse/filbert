@@ -13,14 +13,16 @@ from tkinter import *
 sys.stdout = codecs.getwriter('cp866')(sys.stdout,'replace') #подключаем русский язык
 init()
 
-
+cmd_size = lambda : os.system('mode con lines=49')
 cls = lambda: os.system('cls')
 magenta = lambda: os.system('color d')
 white = lambda: os.system('color f')
 yellow = lambda: os.system('color e')
 green = lambda : os.system('color a')
 user = getpass.getuser()
-white()
+
+cmd_size()
+yellow()
 
 row1 = colored(u'███████ ─── ██████████████████████████████████████████████████','white')
 row2 = colored(u'█────██ ─── █───█─██─█───█───█────█────█────█───█───█───█────█','white')
@@ -479,7 +481,7 @@ class Predicats(object):
                 , user, colored(u'\nДобро пожаловать в '
                                 u'систему Q-Interpreter 0.1\n', 'yellow')
             print colored(u'\n\n\n\n\nИспользуй стандартные '
-                          u'SQL предикаты для парамтризации, такие как:\n','green')
+                          u'SQL предикаты для параметризации, такие как:\n','green')
             print colored(u'in', 'magenta')\
                 ,u'список, например', \
                 colored('in (49, 14)', 'magenta')
