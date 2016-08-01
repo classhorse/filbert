@@ -10,6 +10,7 @@ FROM
 	inner join portfolio as p on b.id = p.parent_id
 	inner join debt as d on p.id = d.r_portfolio_id
 	inner join person as per on d.parent_id = per.id
+	
 	/*users*/
 	inner join 
 			(
