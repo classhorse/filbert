@@ -1,682 +1,754 @@
+
+/*		DataCube 02.08.2016		|		57 column's
+		Author: Lestat Kim		|		Version 1.1.28
+*/
+	
+
 declare @d1 datetime = '01-07-2016 00:00:01'
 declare @d2 datetime = '05-07-2016 23:59:59'
 
-select
-	d.id as 'ID долга'
-	,(case when d.status in (6,7,8,10)	then 0	else 1 end) as 'Активность долга'
-	,isnull(d_stat.name,'') as 'Статус долга'
+SELECT
+
+	d.id 'ID долга'
+	,iif(d.status in (6,7,8,10), 0, 1) 'Активность долга'
+	,isnull(d_stat.name, '') 'Статус долга'
+	,isnull(dsl.name, '') 'Статус на заданную дату'
+	,isnull(dsl.act, '') 'Активность долга на заданную дату'
+	,isnull(tp.name, 'n/a') 'Тип продукта' -- +{wh}__tops
+	,per.id 'ID Должника'
+	,per.fio  'Фио должника'
+	,b.name 'Банк'
+	,p.name 'Портф. тек-й'
+	,isnull(dpl.name, '') 'Портф. на дату'
+	,isnull(dpl.dt, '') 'Дата смены портф.'
+	,iif(p.name like '%EXEC%'
+		,'exec'
+		,iif(p.name like '%HARD%'
+			,'hard'
+			,iif(p.name like '%LEGAL'
+				,'legal'
+				,iif(p.name like '%SOFT%'
+					,'soft'
+					,'n/a'
+				)
+			)
+		)
+	) 'Портфели кратко'
+	,replace(isnull(cast(p.sign_date as date), ''), '1900-01-01', '') 'Вход портф-я'
+	,replace(isnull(cast(p.end_date as date), ''), '1900-01-01', '') 'Выход портф-я'
+	,isnull(d_r.name, '') 'Регион долга'
+	,isnull(dfil.name, '') 'Филиал'
+	,isnull(d.[contract], '') 'Договор'
+	,isnull(d.account, 0) 'Лиц-й счет'
+	,isnull(d.agency_rate, 0) '% Вознагр-я'
+
+--Current fix {
+	,isnull(wt.fio, '') 'Оператор тек-й'
+	,replace(isnull(cast(wt.fd as date), ''), '1900-01-01', '')  'Дата закреп-я тек-го закреп-я'
+	,isnull(wt.name,'') 'Отдел тек-й'
+	,isnull(wt.depart,'') 'Департамент тек-й'
+--}
+
+--Fix on given date {
+	,isnull(fix_wt.fio, '') 'Оператор на зад-ю дату'
+	,replace(isnull(cast(fix_wt.fd as date), ''), '1900-01-01', '')  'Дата закреп-я от зад-й даты'
+	,isnull(fix_wt.name,'') 'Отдел на зад-ю дату'
+	,isnull(fix_wt.depart,'') 'Департамент на зад-ю дату'
+--}
+	,datediff(day, d.start_date, getdate()-1) 'Факт-я DPD(от даты выхода на проср-ку до тек.даты'
 	,(case
-		when d.typ = 3 then 'Ипотека'
-		when d.typ in (2, 33) then 'Автокред'
-		when d.typ not in (2, 3, 33) then 'Ритейл' else libr.tip
-	end) as 'Тип продукта'
-	,per.id as 'ID Должника'
-	,per.f+' '+per.i+' '+per.o as 'Фио должника'
-	,b.name as 'Банк'
-	,p.name as 'Портфель'
-	,(case
-		when p.name like '%EXEC%' then 'exec'
-		when p.name like '%HARD%' then 'hard'
-		when p.name like '%LEGAL%' then 'legal'
-		when p.name like '%SOFT%' then 'soft'
-		else 'н/д'end) as 'Портфели кратко'
-	,isnull(convert(varchar, p.sign_date, 104),'') as 'Вход портфеля'
-	,isnull(convert(varchar, p.end_date, 104),'') as 'Выход портфеля'
-	,isnull(d_r.name,'') as 'Регион'
-	,isnull(dfil.name,'') as 'Филлиал'
-	,isnull(d.[contract],'') as 'Договор'
-	,isnull(d.account,0) as 'Лиц.счет'
-	,isnull(d.agency_rate,0) as '% Вознагр.'
-	,isnull(wt.fio,'') as 'Оператор'
-	,isnull(convert(varchar, wt.fd, 104),'') as 'Дата закрепления'
-	,isnull(wt.name,'') as 'Отдел'
-	,isnull(wt.depart,'') as 'Департамент'
-	,datediff(day, d.start_date, getdate()-1) 'Факт-я DPD(от даты выхода на просрочку до тек.даты'
-	,(case
-		when DATEDIFF(day,d.start_date,getdate()-1) <= 90 then '0--90'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 91 and 180 then '91--180'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 181 and 270 then '181--270'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 271 and 360 then '271--360'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 361 and 540 then '361--540'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 541 and 720 then '541--720'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 721 and 900 then '721--900'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 901 and 1080 then '901--1080'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 1081 and 1440 then '1081--1440'
-		when DATEDIFF(day,d.start_date,getdate()-1) between 1441 and 1800 then '1441--1800'
-		when DATEDIFF(day,d.start_date,getdate()-1) > 1801 then '1801+'
+		when datediff(day,d.start_date,getdate()-1) !> 90 then '[ 0 - 90 ]'
+		when datediff(day,d.start_date,getdate()-1) between 91 and 180 then '[ 91 - 180 ]'
+		when datediff(day,d.start_date,getdate()-1) between 181 and 270 then '[ 181 - 270 ]'
+		when datediff(day,d.start_date,getdate()-1) between 271 and 360 then '[ 271 - 360 ]'
+		when datediff(day,d.start_date,getdate()-1) between 361 and 540 then '[ 361 - 540 ]'
+		when datediff(day,d.start_date,getdate()-1) between 541 and 720 then '[ 541 - 720 ]'
+		when datediff(day,d.start_date,getdate()-1) between 721 and 900 then '[ 721 - 900 ]'
+		when datediff(day,d.start_date,getdate()-1) between 901 and 1080 then '[ 901 - 1080 ]'
+		when datediff(day,d.start_date,getdate()-1) between 1081 and 1440 then '[ 1081 - 1440 ]'
+		when datediff(day,d.start_date,getdate()-1) between 1441 and 1800 then '[ 1441 - 1800 ]'
+		when datediff(day,d.start_date,getdate()-1) !< 1801 then '[ 1801 + ]'
 	end)as 'Бакет факт. DPD'
-	,datediff(day, d.start_date, p.sign_date) 'Банк-я DPD(от даты выхода на просрочку до входа портфеля',
-	(case
-		when datediff(day, d.start_date, p.sign_date) <= 90 then '0--90'
-		when datediff(day, d.start_date, p.sign_date) between 91 and 180 then '91--180'
-		when datediff(day, d.start_date, p.sign_date) between 181 and 270 then '181--270'
-		when datediff(day, d.start_date, p.sign_date) between 271 and 360 then '271--360'
-		when datediff(day, d.start_date, p.sign_date) between 361 and 540 then '361--540'
-		when datediff(day, d.start_date, p.sign_date) between 541 and 720 then '541--720'
-		when datediff(day, d.start_date, p.sign_date) between 721 and 900 then '721--900'
-		when datediff(day, d.start_date, p.sign_date) between 901 and 1080 then '901--1080'
-		when datediff(day, d.start_date, p.sign_date) between 1081 and 1440 then '1081--1440'
-		when datediff(day, d.start_date, p.sign_date) between 1441 and 1800 then '1441--1800'
-		when datediff(day, d.start_date, p.sign_date) > 1801 then '1801+'
-	end) 'Бакет банк. DPD'
-	,isnull(d.start_sum,'') as 'Начальаня сумма долга'
-	,isnull(d.debt_sum,'') as 'Остаток'
-	,isnull(dbl.debt_sum,'') as 'Остаток на заданную дату'
+	,datediff(day, d.start_date, p.sign_date) 'Банк-я DPD(от даты выхода на проср-ку до входа портф-я'
 	,(case
-		when d.debt_sum < 1000	then '0--1.000'
-		when d.debt_sum > 1001 and d.debt_sum < 5000 then '1.000--5.000'
-		when d.debt_sum > 5001 and d.debt_sum < 30000 then '5.000--30.000'
-		when d.debt_sum > 30001 and d.debt_sum < 50000 then '30.000-50.000'
-		when d.debt_sum > 50001 and d.debt_sum < 100000 then '50.000-100.000'
-		when d.debt_sum > 100001 and d.debt_sum < 300000 then '100.000--300.000'
-		when d.debt_sum > 300001 and d.debt_sum < 500000 then '300.000--500.000'
-		when d.debt_sum > 500001 and d.debt_sum < 1000000 then '500.000-1.000.000'
-		when d.debt_sum > 1000001 and d.debt_sum < 3000000 then '1.000.000-3.000.000'
-		when d.debt_sum > 3000001 then '3.000.000+'
-		else '0' end) as 'Диапазон остатка'
-	,isnull(sum(cc.PP_sum),'') as 'Сумма оплат'
-	,isnull(sum(cc.PP_kolvo),'') as 'Кол-во оплат'
-	,isnull(convert(varchar, c.calc_date, 104),'') as 'Последняя дата оплаты'
-	,isnull(sum(dp.kolvo_obeshaniy),'') as 'V обещаний'
-	,isnull(sum(dp.summa_obeshaniy),'') as 'E обещаний'
-	,isnull(convert(varchar, pr.prom_date, 104),'') as 'Последняя дата обещания'
-	,isnull(sum(s.sms_otrp),'') as 'СМС отпр.'
-	,isnull(sum(s.sms_dost),'') as 'СМС дост.'
-	,isnull(sum(cl.ivr_vsego),'') as 'ГС отпр.'
-	,isnull(sum(cl.ivr_dost),'') as 'ГС дост.'
-	,isnull(sum(cl.ish_zvon),'') as 'Исходящих звонков'
-	,isnull(sum(cl.vhod_zvon),'') as 'Входящих звонков'
-	,isnull(sum(cl.viezdi),'') as 'Кол-во выездов'
-	,isnull(sum(cl.pisma),'') as 'Кол-во писем'
-	,isnull(sum(cl.prochee),'') as 'Прочее воздействие'
-	,isnull(convert(varchar, la.[start_date], 104),'') as 'Последняя дата ИП'
-	,isnull(convert(varchar, cl_musor.dt, 104),'') as 'Дата последнего мусорного контакта'
-	,isnull(convert(varchar, cl_perspective.dt, 104),'') as 'Дата последнего перспективного контакта'
-	,isnull((case when sum(perspect.count_perspecive_contacts) >= 1 then 1 else 0 end),'') as 'Наличие перспективного контакта'
-	,isnull(sum(perspect.count_perspecive_contacts),'') as 'Кол-во перспективных контактов'
-	,isnull(sum(perspect.count_contacting_contacts),'') 'Кол-во контактных вызовов'
-from
-	[i_collect].[dbo].[bank] as b
-	left join --portfolio
-			(	select p.id,p.parent_id,p.name,p.sign_date,p.end_date
-				from [i_collect].[dbo].[portfolio] as p
-			)	p on b.id = p.parent_id
-	left join --debt 
-			(	select
-					d.id,d.r_portfolio_id,d.parent_id,	d.debt_sum,d.start_sum,
-					d.agency_rate,d.account,d.contract,d.typ,d.status,d.filial,
-					d.mark1,d.filial_new, d.start_date
-				from [i_collect].[dbo].[debt] as d 
-			)d		on p.id = d.r_portfolio_id
---dbl
-	outer apply 			
-			(	select	dbl.parent_id,dbl.debt_sum
-				from i_collect.dbo.debt_balance_log as dbl
-				where dbl.id in(	select max(d.id)
-								from i_collect.dbo.debt_balance_log as d
-								where d.dt < @d1
-								group by d.parent_id)
-					and dbl.parent_id = d.id
-			)dbl		--on d.id = dbl.parent_id
-	left join --person
-			(select
-					per.id,	per.f,per.i,per.o
-			from
-				[i_collect].[dbo].[person] as per
-			)per		on d.parent_id = per.id
---Библиотека
-	left join(
-				select
-					d.id,
-					(case
-						when d.name in ('КРЕДИТ БЕЗ ПЕРВОНАЧАЛЬНОГО ВЗНОСА','ВАЛЮТА-USD-Кредитная карта',
-										'Ваши деньги-Третий','Авто-экспресс',
-										'ЛЕРУА МЕРЛЕН 20 000 - 300 000 РУБЛЕЙ','АШАН ГИБКИЙ КРЕДИТ',
-										'ВД-Смарт-займ-Стандарт 2014','КРЕДИТ НАДЕЖНЫЙ',
-										'Кредитная карта по Партнерской программе','IL','МАТРАЦ',
-										'ИНСТАНТ (С ОБЕСПЕЧЕНИЕМ) 121+ (10%)','УНИВЕРСАЛЬНЫЙ КРЕДИТ     КОД:TU001',
-										'КУХОННЫЙ ГАРНИТУР','Потреб без обеспечения','Кредит по Партнерской программе',
-										'БЫСТРЫЕ ДЕНЬГИ (БЕЗ ОБЕСПЕЧЕНИЯ) БЕЗ ПРОСРОЧКИ',
-										'КРЕДИТ НАЛИЧНЫМИ - СПЕЦИАЛЬНЫЙ КЛИЕНТ','СПЕЦИАЛЬНЫЙ ПРОЕКТ АШАН ОСОБЕННЫЙ 3',
-										'Кредит по Партнерской программе','КРЕДИТ НА 36 МЕСЯЦЕВ',
-										'Партнерский кредит','КВК',	'КАРТА (БЕЗ ОБЕСПЕЧЕНИЯ) 0-3',
-										'АУДИО/ВИДЕО ТЕХНИКА','Балтийский экспресс-кредит',
-										'СДЕЛАЙ САМ ПЛЮС','КАРТА АШАН (БЕЗ ОБЕСПЕЧЕНИЯ) 4+',	'*',
-										'ТОВАРЫ ДЛЯ ФОТОСЪЕМКИ','Кредитная линия с МК (Престиж)',
-										'Кредит по Персональной программе',	'Микрозайм',
-										'ВД "Пенсионный - Повтор"','КРЕДИТ НАЛИЧНЫМИ КЛАССИЧЕСКИЙ - 1',
-										'Дистанционный кредит','КН5-Аннуитет-потребительские цели',
-										'Стандартный','ОТЛИЧНЫЙ - 60','КРЕДИТ УНИВЕРСАЛЬНЫЙ ЛЕГКИЙ',
-										'Кредитная карта по Персональной программе',
-										'Кредит по программе Престиж Плюс','ПАРТНЕР',
-										'МОМЕНТАЛЬНЫЙ КРЕДИТ (БЕЗ ПОРУЧИТЕЛЯ)','ПРЕДМЕТЫ ИНТЕРЬЕРА',
-										'ЛЕРУА МЕРЛЕН ВЗНОС ОТ 0%','ВД-Смарт займ –"Щедрая осень-1»',
-										'Третье и четвертое обращение','ГАРНИТУР: ГОСТИННАЯ, ДЕТСКАЯ',
-										'Кредитование сотрудников <кредит>','КН',
-										'Кредит по Партнерской программе',	'Смарт займ "Щедрая осень-2»',
-										'К0-Аннуитет-потребительские цели','Пенсионерам - Второй',
-										'Овердрафты и кредитные карты','Кредит по программе "Балтийский стандарт"',
-										'КРЕДИТ НАЛИЧНЫМИ ЭКСПРЕСС - 2','Кредитная карта','2',
-										'Партнерский кредит','Кредитование сотрудников (кредит)',
-										'ВД-Смарт займ –"Щедрая осень-2»','Кредитование сотрудников <КЛ>',
-										'Универсальный кредит','Карта','КАРТА ИКЕЯ (БЕЗ ОБЕСПЕЧЕНИЯ) 4+',
-										'СПАЛЬНЫЙ ГАРНИТУР','КН2-Аннуитет-НБ на неотложные нужды без обеспечения',
-										'Просто деньги','Смарт-займ-Стандарт 2014',	'СПЕЦИАЛЬНЫЙ КЛИЕНТ - 25',
-										'ОТДЫХ (БЕЗ ОБЕСПЕЧЕНИЯ) 121+ (20%)','0-0-24(2)','КАРТА (С ОБЕСПЕЧЕНИЕМ) 4+',
-										'Смарт-займ-Повтор 2014','Овердрафты и кредитные карты',
-										'СПЕЦПРОЕКТ "ЭКСПРЕСС 2"','ВД Смарт займ–"Весеннее настроение"',
-										'Кредитная карта по Персональной программе','АВТОЗАПЧАСТИ',
-										'КАРТА (БЕЗ ОБЕСПЕЧЕНИЯ) 4+','Овердрафт физ.лица',
-										'Кредит по программе "Балтийский стандарт"','КРЕДИТ УНИВЕРСАЛЬНЫЙ',
-										'Кредитная карта по Партнерской программе','ВД-Смарт-займ-Третий 2014',
-										'САНТЕХНИКА','ОТЛИЧНЫЙ - 24','ДВЕРИ','Второе обращение',
-										'СТИРАЛЬНАЯ МАШИНА','Потребительский',
-										'СПЕЦПРОЕКТ "ЛЕГКИЕ ДЕНЬГИ"     КОД:EL1028',
-										'Кредитование малого бизнеса','ПОСУДОМОЕЧНАЯ МАШИНА',
-										'КРЕДИТ СПЕЦИАЛЬНЫЙ','ВД-Смарт-займ-Пенсионный',
-										'БЫСТРЫЕ ДЕНЬГИ (БЕЗ ОБЕСПЕЧЕНИЯ) 121+',
-										'К2-Аннуитет-потребительские цели','Наличные','Внутренние',
-										'0-24-24','ДЕКОРАТИВНЫЙ ИНТЕРЬЕР (ЛЕСТНИЦ','Персональный кредит',
-										'ВД-Пенсионный - "Стандарт" 2014',	'Смарт-займ-Стандарт',
-										'2','Пенсионерам - Третий и Четвертый',	'IL',
-										'Кредитование сотрудников <КЛ>','ОБОГРЕВАТЕЛЬНЫЙ ПРИБОР',
-										'F1800-CREDIT CARD RUR FL RES % 25.5',
-										'СПЕЦПРОЕКТ "ЛЕГКИЕ ДЕНЬГИ" (ДЛЯ ЗАРПЛАТНЫХ КЛИЕНТОВ) EL1023',
-										'Пенсионерам - Первый',	'НОВОГОДНИЙ ДОВЕРИТЕЛЬНЫЙ',
-										'ВД"Ваши деньги-Стандарт"','МНОГОЦЕЛЕВОЙ (RUR)',
-										'Займ','Кредитная карта по программе "Балтийский стандарт"',
-										'СПОРТ-ИНВЕНТАРЬ: ЛЫЖИ, СНОУБОР','Кредитная карта',
-										'Ваши деньги Крым-Стандарт','Смарт займ "Повтор"',
-										'Кредит по программе Престиж Плюс','Пенсионный - "Стандарт" 2014',
-										'Кредит по программе "Балтийский экспресс"',
-										'КОМФОРТНЫЙ КРЕДИТ - АШАН','Крупнорозничные','ДЕТСКАЯ КРОВАТКА',
-										'наличные','Корпоративный',	'ИЗДЕЛИЯ ИЗ МЕХА И КОЖИ',
-										'МЦК (БЕЗ ОБЕСПЕЧЕНИЯ) БЕЗ ПРОСРОЧКИ','СПЕЦИАЛЬНЫЙ ПРОЕКТ "ИКЕА" ОСОБЕННЫЙ  1',
-										'Отличный кредит','кредит наличными','Универсальный выбор',
-										'Кредиты малого и среднего бизнес','Реструктуризация','АШАН ДОСТУПНЫЙ КРЕДИТ',
-										'ИКЕЯ (БЕЗ ОБЕСПЕЧЕНИЯ) 121+ (20%)','ТОВАРЫ ДЛЯ ОХОТЫ И РЫБАЛКИ',
-										'Смарт-займ-Третий-PDF-АП','Installment','Кредитная карта по Партнерской программе',
-										'Универсальный кредит','Карточный экспресс',
-										'Кредитная карта по программе "Балтийский стандарт"',
-										'ГАЗОНОКОСИЛКА','Пенсионный - "Повтор+"2014',
-										'СТРОИТЕЛЬНОЕ ОБОРУДОВАНИЕ: БЕТ','ТЕЛЕВИЗОР','Первое обращение',
-										'ВД-Дачный','Карточный экспресс','0-12-12',
-										'ГАЗОБАЛОННОЕ ОБОРУДОВАНИЕ','Кредитная карта по Персональной программе',
-										'СПЕЦИАЛЬНЫЙ ПРОЕКТ "ИКЕА" ОСОБЕННЫЙ  2','ОПТИМАЛЬНЫЙ КРЕДИТ',
-										'МАЛАЯ БЫТОВАЯ ТЕХНИКА','РЕС-Аннуитет-потребительские цели',
-										'Розничный','ТЕЛЕСКОП','КН2-Аннуитет-потребительские цели',
-										'Кредит для сотрудников Банка','Универсальный выбор',
-										'КОНДИЦИОНЕР','Персональный кредит','Смарт-займ-Пенсионный 2014',
-										'Партнерский кредит','МЦК (С ОБЕСПЕЧЕНИЕМ)',	'КРЕДИТ "0-0-0-24"',
-										'Схема 2.4 (Престиж)','Корпоративный экспресс-кредит',
-										'заем','Кредит по Персональной программе','Смарт займ "Пенсионный Стандарт"',
-										'ЛЕРУА МЕРЛЕН ДОСТУПНЫЙ КРЕДИТ','ТУРИЗМ','Смарт займ–"Весеннее настроение"',
-										'Карточный экспресс','Кредит по Партнерской программе',	'Дистанционный плюс',
-										'Пенсионный - Стандарт','АУДИО/ВИДЕО СИСТЕМЫ ДЛЯ АВТОМО',
-										'БЫСТРЫЕ ДЕНЬГИ (БЕЗ ОБЕСПЕЧЕНИЯ)','Пенсионерам - Специальный',
-										'Смарт займ "Щедрая осень-1»','УНИВЕРСАЛЬНЫЙ КРЕДИТ 2     КОД:TU002',
-										'НОУТБУК','Смарт-займ-Третий','НАСТЕННЫЕ ПОКРЫТИЯ','Пятое обращение',
-										'ХОЛОДИЛЬНИК','ТЕЛЕВИЗОР','КРЕДИТ МИЛЛИОННЫЙ',
-										'Кредитная линия с МК (Престиж)','Большие деньги',
-										'//','ВД-Пенсионный - "Повтор+"2014','Кредит для сотрудников Банка',
-										'ДИВАН','ПРЕМИУМ',	'Кредитная линия с МК','КАРТА (С ОБЕСПЕЧЕНИЕМ) 4+',
-										'БЫСТРЫЕ ДЕНЬГИ (С ОБЕСПЕЧЕНИЕМ) 121+',	'СПЕЦПРОЕКТ "ЭКСПРЕСС 1"',
-										'КРЕДИТ УНИВЕРСАЛЬНЫЙ (1) (ПВ ОТ 0%)','ГАЗОВАЯ/ЭЛЕКТРИЧЕСКАЯ ПЛИТА',
-										'КРЕДИТ ДОЛГОСРОЧНЫЙ','ПРАВИЛЬНЫЙ ВЫБОР',
-										'Кредитная карта по программе "Балтийский стандарт"',
-										'БЫСТРЫЕ ДЕНЬГИ (С ОБЕСПЕЧЕНИЕМ)','Потребительский кредит',
-										'КРОВЕЛЬНЫЕ МАТЕРИАЛЫ','0-0-24','СПЕЦПРОЕКТ "ЛЕГКИЕ ДЕНЬГИ" EL1021',
-										'Корпоративный экспресс-кредит','Карта','Клуб','ВЫТЯЖКА',
-										'ГАРНИТУР: ПРИХОЖАЯ, ВСТРОЕННЫЙ','КАРТА АШАН (БЕЗ ОБЕСПЕЧЕНИЯ) 4+',
-										'ВАЛЮТА-EUR-потребительский','РЕСТРУКТУРИЗИРОВАННАЯ КАРТА (БЕЗ ПОРУЧИТЕЛЯ)',
-										'МНОГОЦЕЛЕВОЙ КРЕДИТ (БЕЗ ПОРУЧИТЕЛЯ)','ВАЛЮТА-EUR-Кредитная карта',
-										'Кредитование сотрудников <кредит>','ОКНА','Смарт займ "Третий"',
-										'ПРЕДМЕТЫ МЕБЕЛИ: КРЕСЛО, СТУЛ,','НОУТБУК','Внутренние',
-										'АШАН КЛАССИЧЕСКИЙ','Кредит по Персональной программе',
-										'ПОТОЛОК','Кредит по программе "Балтийский стандарт"',
-										'Потребительский кредит','ДОМАШНИЙ КИНОТЕАТР, Ц. ФОТОКАМЕРА, ВЫТЯЖКА',
-										'К0-Аннуитет-НБ на неотложные нужды без обеспечения',
-										'СПЕЦПРОЕКТ КРЕДИТ УНИВЕРСАЛЬНЫЙ 3     КОД:TU021',
-										'ИНСТАНТ (БЕЗ ОБЕСПЕЧЕНИЯ) (27%)','неотложные нужды',
-										'Кредит по программе "Балтийский экспресс"',
-										'Овердрафты и кредитные карты','КОМПЛЕКТУЮЩИЕ','Ваши деньги-Стандарт',
-										'Дуал-карт (RUR) Тариф "С-лайн 5000 v1103".Линия с лимитом зад-ти',
-										'Внутренние','ВАЛЮТА-USD-потребительский','КН10-Аннуитет-потребительские цели',
-										'КН1-Аннуитет-потребительские цели','КА5-Аннуитет-потребительские цели',
-										'МЦК (С ОБЕСПЕЧЕНИЕМ) 121+','Ломбардный кредит',
-										'КРЕДИТ УНИВЕРСАЛЬНЫЙ (1)',	'Кредитная линия',
-										'КРЕДИТ ОТЛИЧНЫЙ ПО ПРОГРАММЕ МОМЕНТАЛЬНЫЙ КРЕДИТ',
-										'Балтийский экспресс-кредит','ИНСТРУМЕНТЫ: ДРЕЛИ, ДРУГОЕ',
-										'Дистанционный кредит','ОТДЕЛОЧНЫЕ МАТЕРИАЛЫ','//',
-										'КРЕДИТ НАЛИЧНЫМИ ОТЛИЧНЫЙ - 1','ВД"Ваши деньги-Повтор"',
-										'ВД"Пенсионный - Стандарт"','КРЕДИТ ПРЕСТИЖНЫЙ','Займ на развитие бизнес',
-										'RUR Instant','ВЕЛОСИПЕДЫ, ТРЕНАЖЕРЫ','Кредит по Персональной программе',
-										'КАРТА АШАН (БЕЗ ОБЕСПЕЧЕНИЯ) 0-3','КРЕДИТ УДОБНЫЙ ПО ПРОГРАММЕ МОМЕНТАЛЬНЫЙ КРЕДИТ',
-										'МУЗЫКАЛЬНЫЕ ИНСТРУМЕНТЫ','Кредитная карта по Партнерской программе',
-										'ВД-Смарт-займ-Стандарт','F1900-CREDIT CARD RUR FL RES % 25.5',
-										'Смарт-займ-Спец-PDF-АП','Балтийский экспресс-кредит',
-										'Балтийский экспресс-кредит','Корпоративный экспресс-кредит',
-										'ВД"Ваши деньги-Третий"','ИКЕЯ (С ОБЕСПЕЧЕНИЕМ) 121+ (10%)',
-										'ПРЕМИУМ ЛАЙТ','Просто деньги','Прочие','Внешние','Смарт займ "Стандарт"',
-										'СПЕЦИАЛЬНЫЙ ПРОЕКТ "ИКЕА" ОСОБЕННЫЙ','Ваши деньги-Повтор',
-										'УДОБНЫЙ КРЕДИТ 2 ПО ПРОГРАММЕ БЫСТРЫЕ ДЕНЬГИ     КОД:TU065',
-										'ОТОПИТЕЛЬНЫЕ СИСТЕМЫ','Реструктуризация','ВД-Смарт-займ-Повтор 2014',
-										'КОМПЬЮТЕР: ПРОЦЕССОР, МОНИТОР','СКУТЕР, МОПЕД','ДВЕРИ',
-										'ВД-Смарт-займ-Третий','КРЕДИТ МЕБЕЛЬНЫЙ БУМ',	'ВЫГОДНЫЙ ТУР',
-										'Дистанционный плюс','К0-Аннуитет-НП на неотложные нужды под поручительство ф/л',
-										'Пенсионный - Повтор','ДЕТСКАЯ КОЛЯСКА, КРЕСЛО ДЛЯ АВ',
-										'КРЕДИТ УНИВЕРСАЛЬНЫЙ ЛЕГКИЙ ПО ПРОГРАММЕ МОМЕНТАЛЬНЫЙ КРЕДИТ',
-										'F1800-CREDIT CARD RUR FL RES %','Внешние','Смарт-займ-Повтор',
-										'Кредитная линия','Револьверная карта','Пенсионный Крым-Повтор',
-										'НОУТБУК и ТЕЛЕВИЗОР Samsung','ИНСТАНТ (БЕЗ ОБЕСПЕЧЕНИЯ) 121+ (20%)',
-										'УДОБНЫЙ КРЕДИТ 4 ПО ПРОГРАММЕ БЫСТРЫЕ ДЕНЬГИ     КОД:TU067',
-										'ПРИНТЕР, СКАНЕР, МОДЕМ','АНТЕННА','Потребительский','наличные',
-										'Ваши деньги Крым-Третий','ИКЕЯ (БЕЗ ОБЕСПЕЧЕНИЯ) (30%)',
-										'ЛЕРУА МЕРЛЕН 10 000 - 150 000 РУБЛЕЙ','КАРТА ИКЕЯ (БЕЗ ОБЕСПЕЧЕНИЯ) 0-3',
-										'Внешние','Экспресс-кредит','ЛЕГКИЕ ДЕНЬГИ 1     КОД:EL1037',
-										'НАПОЛЬНЫЕ ПОКРЫТИЯ','Ваши деньги Крым-Повтор',	'ШИНЫ',
-										'РЕСТРУКТУРИЗИРОВАННАЯ КАРТА "АШАН"(RUR) (БЕЗ ПОРУЧИТЕЛЯ)',
-										'Внешние','ШВЕЙНАЯ МАШИНА','Пенсионный Крым-Стандарт',
-										'КРЕДИТ УНИКАЛЬНЫЙ','ПЛАЗМЕННАЯ ПАНЕЛЬ/ДОМАШНИЙ КИН',
-										'Смарт займ "Пенсионный Повтор"','Овердрафт','ОПТИМАЛЬНЫЙ ЛЕГКИЙ',
-										'Кредитная линия с МК','МЦК (БЕЗ ОБЕСПЕЧЕНИЯ)','Универсальный кредит',
-										'ОТЛИЧНЫЙ - 36','GP','Ломбардный кредит','Внутренние','Дачный',
-										'0-0-24(2) ПО ПРОГРАММЕ МОМЕНТАЛЬНЫЙ КРЕДИТ','МЦК (БЕЗ ОБЕСПЕЧЕНИЯ) 121+',
-										'F1200-CREDIT CARD RUR FL RES % 25.5',	'КОМФОРТНЫЙ КРЕДИТ',
-										'Овердрафты и кредитные карты','Дистанционный плюс',
-										'Смарт-займ-Третий 2014','КРЕДИТ СТАНДАРТНЫЙ','КН4-Аннуитет-потребительские цели',
-										'ЭЛЕКТРОИГРУШКИ','КАРТА (БЕЗ ОБЕСПЕЧЕНИЯ) 4+','КРЕДИТ НАЛИЧНЫМИ ЭКСПРЕСС - 1',
-										'Экспресс-кредит','КРЕДИТ НАЛИЧНЫМИ КЛАССИЧЕСКИЙ - 2','МОБИЛЬНЫЙ ТЕЛЕФОН',
-										'КАРТА (С ОБЕСПЕЧЕНИЕМ) 0-3')
-						then 'Ритейл'
-						when d.name in ('КЛАССИЧЕСКИЙ АВТОКРЕДИТ - ПАРТНЕРСКИЙ','Классический автокредит',
-										'АВТОЭКСПРЕСС КРЕДИТ НА АВТОМОБИЛИ С ПРОБЕГОМ (СТАРШЕ 8 ЛЕТ)',
-										'Дальневосточный автокредит','АВТО ОФИЦИАЛ (БЕЗ ОБЕСПЕЧЕНИЯ) 121+',
-										'Лояльный автокредит','Лояльный автокредит',
-										'АВТОКРЕДИТ (БЕЗ ПОРУЧИТЕЛЯ)','Ц1-Цессия-АВ Автокредитование: стандарт',
-										'КА4-Аннуитет-АВ Автокредитование: стандарт','Citroen_все модели_Акция_10%',
-										'КА2-Аннуитет-АВ Автокредитование: стандарт',
-										'АВТОЭКСПРЕСС КРЕДИТ - ОПТИМАЛЬНЫЙ ЛЕГКИЙ',
-										'АВТОЭКСПРЕСС КРЕДИТ НА КОММЕРЧЕСКИЙ ТРАНСПОРТ ПЛЮС',
-										'АВТО ОФИЦИАЛ (БЕЗ ОБЕСПЕЧЕНИЯ)',
-										'АВТОЭКСПРЕСС КРЕДИТ НА АВТОМОБИЛИ С ПРОБЕГОМ',
-										'АВТОЭКСПРЕСС КРЕДИТ-УНИВЕРСАЛЬНЫЙ ТУРБО(С СУБСИДИЕЙ)',
-										'АВТОЭКСПРЕСС КРЕДИТ - АВТОРЫНОК','АВТОЭКСПРЕСС КРЕДИТ - УНИВЕРСАЛЬНЫЙ ПЛЮС',
-										'Автокредит "Стандарт"','Peugeot_408_13.9%',
-										'Citroen_C4_BerlingoПасс_C3 Picasso_11.9%',
-										'АВТОЭКСПРЕСС КРЕДИТ - LADA ПЛЮС','Автокредиты','Peugeot 408_6.9%',
-										'АВТОЭКСПРЕСС КРЕДИТ - АВТОРЫНОК ПЛЮС',
-										'АВТОЭКСПРЕСС КРЕДИТ - KIA','АВТОЭКСПРЕСС КРЕДИТ - ОПТИМАЛЬНЫЙ',
-										'КА3-Аннуитет-АВ Автокредитование: стандарт','Автокредит',
-										'Citroen_Berlingo VP Пасс 10.10%','АВТОКРЕДИТ (С ПОРУЧИТЕЛЕМ)',
-										'АВТО НЕОФИЦИАЛ (С ОБЕСПЕЧЕНИЕМ)',	'Авто-экспресс','Автокредит',
-										'АВТОЭКСПРЕСС КРЕДИТ НА КОММЕРЧЕСКИЙ ТРАНСПОРТ',
-										'АВТОЭКСПРЕСС КРЕДИТ - УНИВЕРСАЛЬНЫЙ ТУРБО','АВТО ОФИЦИАЛ (С ОБЕСПЕЧЕНИЕМ)',
-										'Ц8-Цессия-АВ Автокредитование: стандарт','КЛАССИЧЕСКИЙ АВТОКРЕДИТ НА КОММЕРЧЕСКИЙ ТРАНСПОРТ ПЛЮС',
-										'КА17-Аннуитет-АВ Автокредитование: стандарт',
-										'АВТОКЛАССИК ОФИЦИАЛ (БЕЗ ОБЕСПЕЧЕНИЯ)','Citroen C4 седан_13,9%',
-										'АВТОЭКСПРЕСС КРЕДИТ - ЛЮКС (С СУБСИДИЕЙ)','Авто-экспресс',
-										'КЛАССИЧЕСКИЙ АВТОКРЕДИТ - HYUNDAI','Peugeot 408_13.9%',
-										'АВТОЭКСПРЕСС КРЕДИТ - UZ DAEWOO','Peugeot_3008_10.9%',
-										'КА15-Аннуитет-АВ Автокредитование: стандарт',
-										'Автокредит "Стандарт"','АВТОЭКСПРЕСС КРЕДИТ - ЛЮКС ЛАЙТ',	'АВТОЭКСПРЕСС КРЕДИТ - ЛЮКС',
-										'АВТО ОФИЦИАЛ (С ОБЕСПЕЧЕНИЕМ) 121+','Peugeot 2008_14.9%',
-										'Классический автокредит',	'Автостатус','Citroen_C4 седан_12.12%','Peugeot_308Новая_11%',
-										'АВТОЭКСПРЕСС КРЕДИТ - HYUNDAI СПЕЦИАЛЬНЫЙ',
-										'КЛАССИЧЕСКИЙ АВТОКРЕДИТ - СПЕЦИАЛЬНЫЙ','АВТОЭКСПРЕСС МОСКВА-0506 (ОТМЕНА)',
-										'КА1-Аннуитет-АВ Автокредитование: стандарт',
-										'Peugeot_408_0.0%',	'Citroen C4 седан_8.9%',
-										'АВТОЭКCПРЕСС КРЕДИТ - CHERY','Peugeot_308_SKD_12.9%',
-										'Кредит на покупку грузового и коммерческого транспорта',
-										'АВТОЭКСПРЕСС КРЕДИТ - LADA','Citroen C4 седан_14,9%',
-										'КЛАССИЧЕСКИЙ АВТОКРЕДИТ - MITSUBISHI',	'Citroen_C-Elysee_10.10%',
-										'АВТО НЕОФИЦИАЛ (БЕЗ ОБЕСПЕЧЕНИЯ)',	'(ГП) Peugeot_408_0.0%',
-										'АВТОЭКСПРЕСС КРЕДИТ НА АВТОМОБИЛИ С ПРОБЕГОМ (ДО 8 ЛЕТ)',
-										'АВТОЭКСПРЕСС КРЕДИТ - ПАРТНЕРСКИЙ (С СУБСИДИЕЙ)',
-										'КА19-Аннуитет-АВ Автокредитование: стандарт',
-										'Peugeot 301_13.9%','Peugeot 301_12.9%',
-										'К0-Аннуитет-АВ Автокредитование: стандарт',
-										'Ц10-Цессия-АВ Автокредитование: стандарт','Стандартный','Peugeot_4007_9.9%',
-										'КЛАССИЧЕСКИЙ АВТОКРЕДИТ - ВЫГОДНЫЙ','АВТО НЕОФИЦИАЛ (С ОБЕСПЕЧЕНИЕМ) 91+',
-										'КЛАССИЧЕСКИЙ АВТОКРЕДИТ - KIA','АВТОЭКСПРЕСС КРЕДИТ - HYUNDAI',
-										'Citroen_C4 седан_6.6%','Классический автокредит',
-										'АВТОЭКСПРЕСС КРЕДИТ - СПЕЦИАЛЬНАЯ ПРОГРАММА (С СУБСИДИЕЙ)',
-										'Peugeot_308_SKD_10.9%','АВТО НЕОФИЦИАЛ (БЕЗ ОБЕСПЕЧЕНИЯ) 91+',
-										'АВТОЭКСПРЕСС КРЕДИТ - ПАРТНЕРСКИЙ',
-										'АВТОКЛАССИК ОФИЦИАЛ (БЕЗ ОБЕСПЕЧЕНИЯ) 121+',
-										'Peugeot_508_11.9%',	'Автокредитование',
-										'АВТОЭКСПРЕСС КРЕДИТ - КОММЕРЧЕСКИЙ ГАЗ',
-										'РЕС-Аннуитет-АВ Автокредитование: стандарт',
-										'Citroen_C4_BerlingoПасс_C5_11.9%')
-						then 'Автокред'
-
-						when d.name in ('Выселение','Обращение взыскания','Ипотечный кредит','Ц6-Цессия-Покупка недвижимости',
-										'Банк-ответчик','Ц9-Цессия-Покупка недвижимости','Ипотечный кредит','ипотека',
-										'Ц0-Цессия-Покупка недвижимости',	'ИПОТЕКА',
-										'К0-Аннуитет-НН на неотложные нужды под залог недвиж',
-										'Ц5-Цессия-Покупка недвижимости')
-						then 'Ипотека'
-						else 'н/д'
-					end) as tip
-
-				from [i_collect].[dbo].[debt] as d
-			)libr		on d.id = libr.id
-----last calc_date
-	left join	 
-			(	select dc.parent_id,dc.calc_date
-				from [i_collect].[dbo].[debt_calc] as dc
-				where dc.id in (select max(id)
-								from [i_collect].[dbo].[debt_calc]
-								group by parent_id)
-					and dc.is_confirmed = 1
-				group by dc.parent_id, dc.calc_date
-			)c		on d.id = c.parent_id
-----last prom_date
-	left join 
-			(	select pr.parent_id, pr.prom_date
-				from [i_collect].[dbo].[debt_promise] as pr
-				where pr.id in (select max(id)
-								from [i_collect].[dbo].[debt_promise]
-								group by parent_id)
-				group by pr.parent_id,pr.prom_date			
-			)pr		on d.id = pr.parent_id 
---last user
-	left join 
-			(	select
-					wt.r_debt_id,dep.name,	u.f+' '+u.i+' '+u.o as fio,u.depart,wt.fd
-				from [i_collect].[dbo].[work_task_log] as wt
-					left join --users
-							(select	u.id, u.r_department_id,u.f,u.i,u.o,u.depart
-								from [i_collect].[dbo].[users] as u
-							)u		on wt.r_user_id = u.id
-					left join --department
-							(select dep.dep, dep.name
-								from [i_collect].[dbo].[department] as dep
-							)dep		on u.r_department_id = dep.dep				where
-					wt.id in (select max(id)
-								from [i_collect].[dbo].[work_task_log]
-								group by r_debt_id)
-			)wt		on d.id = wt.r_debt_id
---last law_act
-	left join 
-			(	select la.r_debt_id, la.[start_date]
-				from [i_collect].[dbo].[law_act] as la
-				where la.id in 
-							(select max(id)
-							from [i_collect].[dbo].[law_act]
-							group by r_debt_id)
-				group by la.r_debt_id,la.[start_date]
-			)la		on la.r_debt_id = d.id
---Статус долга
-	left join 
-			(select d1.name,
-					d1.code
-				from [i_collect].[dbo].[dict] as d1
-				where d1.parent_id = 6
-			)d_stat		on d.status = d_stat.code			
---Регион
-	left join 
-			(select d.name, d.code
-				from [i_collect].[dbo].[dict] as d
-				where d.parent_id = 39
-			)d_r	on d_r.code = d.filial
---sms
-	outer apply  
-			(select s.parent_id,
-					sum(case when (s.status in (1,2,3,4,5,6,7,8,9)) then 1 else 0 end) as sms_otrp,
-					sum(case when (s.status in (1,2)) then 1 else 0 end) as sms_dost
-				from [i_collect].[dbo].[debt_sms] as s				
-				where s.send_date between @d1 and @d2 and s.parent_id = d.id
-				group by s.parent_id
-			)s		--on d.id = s.parent_id
---гс, смс, письма, выезды
-	outer apply(select 
-					cl.r_debt_id,
-					sum(case
-							when (cl.typ = 19 and cl.dsc = 'Импортировано из Infinity (Автоинформатор)')
-							then 1 else 0 end) as ivr_vsego,
-					sum(case when (cl.typ = 19 and cl.result = 733 and cl.dsc = 'Импортировано из Infinity (Автоинформатор)')
-							then 1 else 0 end) as ivr_dost,
-					sum(case when (cl.typ = 1 and cl.result != 0) then 1 else 0 end) as ish_zvon,
-					sum(case when (cl.typ = 3) then 1 else 0 end) as vhod_zvon,
-					sum(case when (cl.typ = 2) then 1 else 0 end) as viezdi,
-					sum (case when (cl.typ = 6)	then 1 else 0 end) as pisma,
-					sum(case when cl.typ not in (6,2,3,1,19) then 1 else 0 end) as prochee							
-				from [i_collect].[dbo].[contact_log] as cl
-				where cl.dt between @d1 and @d2	and cl.r_debt_id = d.id
-				group by cl.r_debt_id
-			)cl		--on d.id = cl.r_debt_id
---calc summ
-	outer apply
-			(
-				select 
-					dc.parent_id,sum(dc2.PP_sum) as PP_sum,sum(dc2.PP_kolvo) as PP_kolvo
-				from [i_collect].[dbo].[debt_calc] as dc
-					left join (select 
-									dc2.id as id,
-									(case 
-										when (dc2.int_sum is not null and dc2.is_confirmed = 1 and dc2.is_cancel = 0)
-										then dc2.int_sum else 0
-									end) as PP_sum,
-									(case 
-										when (dc2.int_sum is not null and dc2.is_confirmed = 1 and dc2.is_cancel = 0)
-										then 1	else 0 
-									end) as PP_kolvo
-								from [i_collect].[dbo].[debt_calc] as dc2
-								group by dc2.id,dc2.is_confirmed,dc2.int_sum,dc2.is_cancel
-							)dc2		on dc2.id=dc.id
-					
-						where dc.calc_date between @d1 and @d2	and dc.parent_id = d.id						
-						group by dc.parent_id
-			)cc		--on cc.parent_id = d.id
-	outer apply 
-			(--присоединяем обещания
-				select dp.parent_id, 
-					sum(dp2.summa_obeshaniy) as summa_obeshaniy,
-					sum(dp2.kolvo_obeshaniy) as kolvo_obeshaniy
-				from [i_collect].[dbo].[debt_promise] as dp
-					left join 
-							(select dp2.id as id,
-								(case when (dp2.prom_sum is not null) then dp2.prom_sum else 0 end) as summa_obeshaniy,
-								(case when (dp2.prom_sum is not null) then 1 else 0	end) as kolvo_obeshaniy
-							from [i_collect].[dbo].[debt_promise] as dp2
-							group by dp2.id,dp2.prom_sum,dp2.dt
-							)dp2		on dp2.id=dp.id
-				where 
-					d.id = dp.parent_id 
-					and dp.dt between @d1 and @d2
-				group by dp.parent_id
-				) dp
---fillial
-	left join	
-			(	select d.code,d.name
-				from i_collect.dbo.dict as d
-				where d.parent_id = 61
-			)dfil		on d.filial_new = dfil.code
---последний мусорный контакт
-	left join( select cl.r_debt_id, cl.dt
-				from i_collect.dbo.contact_log as cl
-				where cl.result in (7,325,8,730,731,206,810,811
-									,812,813,814,815,320164,120158,120159,120161
-									,120162,120163,120164,320639,320854,320855,320862
-									,320863,320864,320865,321038,321288,321289,321296
-									,321297,321298,321299,321468,320618,320611,320653
-									,320612,320727,320728
+		when datediff(day, d.start_date, p.sign_date) !> 90 then '[ 0-90 ]'
+		when datediff(day, d.start_date, p.sign_date) between 91 and 180 then '[ 91 - 180 ]'
+		when datediff(day, d.start_date, p.sign_date) between 181 and 270 then '[ 181 - 270 ]'
+		when datediff(day, d.start_date, p.sign_date) between 271 and 360 then '[ 271 - 360 ]'
+		when datediff(day, d.start_date, p.sign_date) between 361 and 540 then '[ 361 - 540 ]'
+		when datediff(day, d.start_date, p.sign_date) between 541 and 720 then '[ 541 - 720 ]'
+		when datediff(day, d.start_date, p.sign_date) between 721 and 900 then '[ 721 - 900 ]'
+		when datediff(day, d.start_date, p.sign_date) between 901 and 1080 then '[ 901 - 1080 ]'
+		when datediff(day, d.start_date, p.sign_date) between 1081 and 1440 then '[ 1081 - 1440 ]'
+		when datediff(day, d.start_date, p.sign_date) between 1441 and 1800 then '[ 1441 - 1800 ]'
+		when datediff(day, d.start_date, p.sign_date) !< 1801 then '[ 1801 + ]'
+	end) 'Бакет банк. DPD'
+	,isnull(d.start_sum, '') as 'Начальная сумма долга'
+	,isnull(d.debt_sum, '') as 'Остаток'
+	,isnull(dbl.debt_sum, '') as 'Остаток на заданную дату'
+	,iif(d.debt_sum !> 1000
+		,'0k - 1k'
+		,iif(d.debt_sum between 1001 and 5000
+			,'1k - 5k'
+			,iif(d.debt_sum between 5001 and 30000
+				,'5k - 30k'
+				,iif(d.debt_sum between 30001 and 50000
+					,'30k - 50k'
+					,iif(d.debt_sum between 50001 and 100000
+						,'50k - 100k'
+						,iif(d.debt_sum between 100001 and 300000
+							,'100k - 300k'
+							,iif(d.debt_sum between 300001 and 500000
+								,'300k - 500k'
+								,iif(d.debt_sum between 500001 and 1000000
+									,'500k - 1kk'
+									,iif(d.debt_sum between 1000001 and 3000000
+										,'1kk - 3kk'
+										,iif(d.debt_sum !< 3000001
+											,'3kk+'
+											,'0'
+										)
 									)
+								)
+							)
+						)
+					)
+				)
+			)
+		)
+	) 'Диапазон остатка'
+	,isnull(sum(cc.PP_sum),'') 'E оплат'
+	,isnull(sum(cc.PP_kolvo),'') 'V оплат'
+	,replace(isnull(cast(c.calc_date as date),''), '1900-01-01', '') 'Посл-я дата оплаты'
+	,isnull(sum(dp.kolvo_obeshaniy), '') 'V обещаний'
+	,isnull(sum(dp.summa_obeshaniy), '') 'E обещаний'
+	,replace(isnull(cast(pr.prom_date as date), ''), '1900-01-01', '') 'Посл-я дата обещания'
+	,isnull(sum(s.sms_otrp), '') 'V sms отпр-х'
+	,isnull(sum(s.sms_dost), '') 'V sms дост-х'
+	,isnull(sum(cl.ivr_vsego), '') 'V ivr отпр-х'
+	,isnull(sum(cl.ivr_dost), '') 'V ivr дост-х'
+	,isnull(sum(cl.ish_zvon), '') 'V исход-х звон-в'
+	,isnull(sum(cl.vhod_zvon), '') 'V вход-х звон-в'
+	,isnull(sum(cl.viezdi), '') 'V выездов'
+	,isnull(sum(cl.pisma), '') 'V писем'
+	,isnull(sum(cl.prochee), '') 'V прочего возд-я'
+	,replace(isnull(cast(la.[start_date] as date), ''), '1900-01-01', '') 'Последняя дата ИП'
+	,replace(isnull(cast(cl_musor.dt as date), ''), '1900-01-01', '') 'Дата посл-го мусор-го конт-а'
+	,replace(isnull(cast(cl_perspective.dt as date), ''), '1900-01-01', '') 'Дата посл.перспек-го конт-а.'
+	,isnull(iif(sum(perspect.count_perspecive_contacts) !< 1, 1, 0 ), '') 'Наличие перспек-го конт-а'
+	,isnull(sum(perspect.count_perspecive_contacts), '') 'V персп-х конт-в'
+	,isnull(sum(perspect.count_contacting_contacts), '') 'V персп-х вызовов'
 
-					and cl.id in(select max(id)
-									from i_collect.dbo.contact_log
-									group by r_debt_id)
-			)cl_musor		on cl_musor.r_debt_id = d.id
+FROM
+	[i_collect].[dbo].[bank] as b
+
+/*	portfolio
+*/
+	left join 
+			(
+			select 
+				p.id
+				,p.parent_id
+				,p.name
+				,p.sign_date
+				,p.end_date
+			from 
+				[i_collect].[dbo].[portfolio] p
+
+			)p
+				on b.id = p.parent_id
+
+/*	debt
+*/
+	left join
+			(
+			select
+				d.id
+				,d.r_portfolio_id
+				,d.parent_id
+				,d.debt_sum
+				,d.start_sum
+				,d.agency_rate
+				,d.account
+				,d.contract
+				,d.typ
+				,d.status
+				,d.filial
+				,d.mark1
+				,d.filial_new
+				,d.start_date
+			from 
+				[i_collect].[dbo].[debt] as d 
+
+			)d
+				on p.id = d.r_portfolio_id
+
+/*	debt balance log
+*/
+	outer apply 			
+			(
+			select
+				dbl.parent_id
+				,dbl.debt_sum
+			from 
+				i_collect.dbo.debt_balance_log dbl
+			where
+				dbl.parent_id = d.id
+				and dbl.id in 
+						(
+						select 
+							max(d.id)
+						from 
+							i_collect.dbo.debt_balance_log as d
+						where 
+							d.dt < @d1
+						group by 
+							d.parent_id
+						)
+			)dbl	
+
+/*	person
+*/
+	left join
+			(
+			select
+				per.id
+				,per.f + ' ' + per.i + ' ' + per.o fio
+			from
+				[i_collect].[dbo].[person] per
+			)per
+				on d.parent_id = per.id
+
+/*	product type
+	+ {wh}
+*/
+	left join
+			(
+				select
+					d.id
+					,di.name
+				from
+					i_collect.dbo.debt d
+					left join
+							(
+							select
+								di.code
+								,di.name
+							from
+								i_collect.dbo.dict di
+							where
+								di.parent_id = 11
+							)di
+								on d.typ = di.code
+				where
+					d.id not in
+							(
+							select
+								id
+							from
+								wh_data.dbo.type_of_product_special
+							)
+
+			UNION
+				
+				select
+					tops.id
+					,di.name
+				from
+					wh_data.dbo.type_of_product_special tops
+					left join 
+							(
+							select
+								di.code
+								,di.name
+							from
+								i_collect.dbo.dict di
+							where
+								di.parent_id = 11
+							)di
+								on di.code = tops.typ
+
+			)tp
+				on tp.id = d.id
+			
 
 
-	--последний перспективный контакт
-	left join(
-				select cl.r_debt_id,cl.dt
-				from i_collect.dbo.contact_log as cl
-				where cl.result in (1,2,4,5,11,12,14,15,16,201,202,204,207,208,210,212,213,706,
-									707,712,714,715,717,718,719,720,721,723,726,729,737,738,739,
-									740,816,817,818,819,820,821,824,825,826,838,839,840,842,861,
-									862,863,865,866,867,868,870,874,875,877,880,120154,120155,
-									120156,120183,120186,120187,120188,120189,120190,120191,120193,
-									120194,120197,120198,120199,120200,120201,120202,120205,120206,
-									120207,120214,120215,120216,120217,120218,120221,120222,120223,
-									120224,120225,120226,120227,120228,120231,120233,120234,120235,
-									120237,120239,120240,120241,320157,320161,320272,320273,320274,
-									320280,320283,320284,320287,320297,320300,320301,320304,320310,
-									320311,320313,320316,320317,320318,320319,320320,320322,320712,
-									320607,320616,320609,320713,320614,320617,320610,320714,320635,
-									320704,320637,320715,320640,320705,320710,321084,321023,321024,
-									21025,321137,321138,321139,321140,321057,321034,321032,321028,
-									321035,321033,321031,321027,321142,321143,321144,321145,321083,
-									321078,321073,321085,321082,321077,321072,321062,321081,321076,
-									321071,321061,321147,321148,321149,321150,321080,321075,321070,
-									321086,321079,321074,321069,321060,321022,321021,321020,321017,
-									321152,321153,321154,321155,320879,320880,320881,320882,320929,
-									320927,320925,320930,320928,320926,320924,320921,321158,321159,
-									321160,321161,320920,320919,320918,321157,320917,320916,320915,
-									320912,320910,320909,320908,320905,321164,321165,321166,321167,
-									320903,320902,320901,321163,320900,320899,320898,320895,320893,
-									320892,320891,320888,321226,321225,321223,321224,321221,321220,
-									321219,321218,321215,320936,320938,320932,321213,321212,321211,
-									321210,321209,321208,321207,321206,321205,321202,321200,321199,
-									321198,321195,321183,321181,321179,321178,321177,321176,321175,
-									321174,321173,320935,320937,320931
-									--феникс
-									,321513,321457,321458,321459,321486,321484,321482,321462,321485,
-									321483,321465,321461,321512,321507,321502,321514,321511,321506,
-									321501,321491,321510,321505,321500,321490,321509,321504,321499,
-									321515,321508,321503,321498,321489,321456,321455,321454,321451
-									--МТС
-									,320712,320607,320616,320609,320713,320614,320617,320610,320714,
-									320635,320704,320637,320715,320640,320705,320710
-								)					
-					and cl.id in(	select max(id)
-									from i_collect.dbo.contact_log
-									group by r_debt_id)
-			)cl_perspective		on cl_perspective.r_debt_id = d.id
+/*	last calc_date
+*/
+	left join	 
+			(	
+			select 
+				dc.parent_id
+				,dc.calc_date
+			from 
+				[i_collect].[dbo].[debt_calc] dc
+			where
+				dc.is_confirmed = 1
+				and dc.id in 
+						(
+						select 
+							max(id)
+						from 
+							[i_collect].[dbo].[debt_calc]
+						group by 
+							parent_id
+						)
+				
+			group by 
+				dc.parent_id, dc.calc_date
 
-/*perpective_contact*/
+			)c		on d.id = c.parent_id
+
+/*	last prom_date
+*/
+	left join 
+			(	
+			select 
+				pr.parent_id, pr.prom_date
+			from 
+				[i_collect].[dbo].[debt_promise] as pr
+			where 
+				pr.id in 
+						(
+						select 
+							max(id)
+						from 
+							[i_collect].[dbo].[debt_promise]
+						group by 
+							parent_id
+						)
+			group by 
+				pr.parent_id,pr.prom_date			
+
+			)pr
+				on d.id = pr.parent_id 
+
+/*	last user
+*/
+	left join 
+			(
+			select
+				wt.r_debt_id
+				,dep.name
+				,u.fio
+				,u.depart
+				,wt.fd
+			from 
+				[i_collect].[dbo].[work_task_log] as wt
+				left join
+						(
+						select	
+							u.id
+							,u.r_department_id
+							,u.f + ' ' + u.i + ' ' + u.o fio
+							,u.depart
+						from 
+							[i_collect].[dbo].[users] u
+
+						)u
+							on wt.r_user_id = u.id
+
+				left join
+						(
+						select 
+							dep.dep
+							,dep.name
+						from 
+							[i_collect].[dbo].[department] dep
+						
+						)dep
+							on u.r_department_id = dep.dep				
+			where
+				wt.id in 
+						(
+						select 
+							max(id)
+						from 
+							[i_collect].[dbo].[work_task_log]
+						group by 
+							r_debt_id						
+						)
+
+			)wt
+				on d.id = wt.r_debt_id
+
+/*	last law_act
+*/
+	left join 
+			(
+			select 
+				la.r_debt_id
+				,la.[start_date]
+			from 
+				[i_collect].[dbo].[law_act] la
+			where 
+				la.id in 
+						(
+						select 
+							max(id)
+						from 
+							[i_collect].[dbo].[law_act]
+						group by 
+							r_debt_id
+						)
+			group by 
+				la.r_debt_id,la.[start_date]
+			
+			)la
+				on la.r_debt_id = d.id
+
+/*	debt_status
+*/
+	left join 
+			(
+			select 
+				d1.name
+				,d1.code
+			from 
+				[i_collect].[dbo].[dict] as d1
+			where 
+				d1.parent_id = 6
+
+			)d_stat
+				on d.status = d_stat.code	
+					
+/* region
+*/
+	left join
+			(
+			select 
+				d.name
+				,d.code
+			from 
+				[i_collect].[dbo].[dict] as d
+			where 
+				d.parent_id = 39
+
+			)d_r
+				on d_r.code = d.filial
+
+/*	sms
+*/
+	outer apply  
+			(
+			select 
+				s.parent_id
+				,sum(iif(s.status in (1,2,3,4,5,6,7,8,9), 1, 0)) sms_otrp
+				,sum(iif(s.status in (1,2), 1, 0)) sms_dost
+			from 
+				[i_collect].[dbo].[debt_sms] as s				
+			where 
+				s.parent_id = d.id
+				and s.send_date between @d1 and @d2
+			group by 
+				s.parent_id
+
+			)s
+
+/*	IO_calls, ivr, mail, departure, other
+*/
 	outer apply
 			(
-				select perspect.r_debt_id,
-					count(perspect.id) as count_contacting_contacts,
-					count(case
-						when perspect.result in (
-									1,2,4,5,11,12,14,15,16,201,202,204,207,208,210,212,213,706,
-									707,712,714,715,717,718,719,720,721,723,726,729,737,738,739,
-									740,816,817,818,819,820,821,824,825,826,838,839,840,842,861,
-									862,863,865,866,867,868,870,874,875,877,880,120154,120155,
-									120156,120183,120186,120187,120188,120189,120190,120191,120193,
-									120194,120197,120198,120199,120200,120201,120202,120205,120206,
-									120207,120214,120215,120216,120217,120218,120221,120222,120223,
-									120224,120225,120226,120227,120228,120231,120233,120234,120235,
-									120237,120239,120240,120241,320157,320161,320272,320273,320274,
-									320280,320283,320284,320287,320297,320300,320301,320304,320310,
-									320311,320313,320316,320317,320318,320319,320320,320322,320712,
-									320607,320616,320609,320713,320614,320617,320610,320714,320635,
-									320704,320637,320715,320640,320705,320710,321084,321023,321024,
-									21025,321137,321138,321139,321140,321057,321034,321032,321028,
-									321035,321033,321031,321027,321142,321143,321144,321145,321083,
-									321078,321073,321085,321082,321077,321072,321062,321081,321076,
-									321071,321061,321147,321148,321149,321150,321080,321075,321070,
-									321086,321079,321074,321069,321060,321022,321021,321020,321017,
-									321152,321153,321154,321155,320879,320880,320881,320882,320929,
-									320927,320925,320930,320928,320926,320924,320921,321158,321159,
-									321160,321161,320920,320919,320918,321157,320917,320916,320915,
-									320912,320910,320909,320908,320905,321164,321165,321166,321167,
-									320903,320902,320901,321163,320900,320899,320898,320895,320893,
-									320892,320891,320888,321226,321225,321223,321224,321221,321220,
-									321219,321218,321215,320936,320938,320932,321213,321212,321211,
-									321210,321209,321208,321207,321206,321205,321202,321200,321199,
-									321198,321195,321183,321181,321179,321178,321177,321176,321175,
-									321174,321173,320935,320937,320931
-									--феникс
-									,321513,321457,321458,321459,321486,321484,321482,321462,321485,
-									321483,321465,321461,321512,321507,321502,321514,321511,321506,
-									321501,321491,321510,321505,321500,321490,321509,321504,321499,
-									321515,321508,321503,321498,321489,321456,321455,321454,321451
-									--МТС
-									,320712,320607,320616,320609,320713,320614,320617,320610,320714,
-									320635,320704,320637,320715,320640,320705,320710)
-						then perspect.id
-					end) as	count_perspecive_contacts
-				from contact_log as perspect
-				where
-					perspect.typ in (1,3)
-					and perspect.dt between @d1 and @d2
-					and perspect.result in (1,2,3,4,5,9,11,12,13,14,15,16,30,201,202,203,204,
-	205,207,208,209,210,212,213,220,250,313,314,315,318,
-	321,327,704,706,707,708,709,710,711,712,713,714,715,
-	717,718,719,720,721,722,723,726,728,729,737,738,739,
-	740,810,816,817,818,819,820,821,822,823,824,825,826,
-	827,828,829,830,831,832,834,835,836,837,838,839,840,
-	841,842,861,862,863,864,865,866,867,868,870,871,872,
-	874,875,876,877,878,879,880,881,882,884,885,886,887,
-	120154,120155,120156,120158,120178,120179,120180,120181,
-	120182,120183,120184,120185,120186,120187,120188,120189,
-	120190,120191,120192,120193,120194,120195,120196,120197,
-	120198,120199,120200,120201,120202,120203,120204,120205,
-	120206,120207,120208,120209,120210,120211,120212,120213,
-	120214,120215,120216,120217,120218,120221,120222,120223,
-	120224,120225,120226,120227,120228,120231,120233,120234,
-	120235,120237,120239,120240,120241,320157,320161,320163,
-	320257,320272,320273,320274,320275,320276,320277,320278,
-	320279,320280,320281,320283,320284,320286,320287,320288,
-	320289,320296,320297,320298,320299,320300,320301,320303,
-	320304,320305,320310,320311,320313,320314,320315,320316,
-	320317,320318,320319,320320,320322,	320618,320712,320607,
-	320616,320608,320609,320713,320614,320617,320615,320654,
-	320610,	320652,320648,320649,320650,320651,320714,320635,
-	320704,320636,320637,320715,320640,320705,320641,320711,
-	320710,320642,320706,320707,320708,320709,320854,321084,
-	321023,321024,321025,321137,321138,321139,321140,321057,
-	321034,321032,321030,321028,321035,321033,321031,321029,
-	321027,321142,321143,321144,321145,321083,321078,321073,
-	321085,321082,321077,321072,321068,321065,321062,321059,
-	321081,321076,321071,321067,321064,321061,321058,321147,
-	321148,321149,321150,321080,321075,321070,321086,321079,
-	321074,321069,321066,321063,321060,321026,321022,321021,
-	321020,321019,321018,321017,321016,321015,321014,321013,
-	321012,321152,321153,321154,321155,320879,320880,320881,
-	320882,320929,320927,320925,320923,320930,320928,320926,
-	320924,320922,320921,321158,321159,321160,321161,320920,
-	320919,320918,321157,320917,320916,320915,320914,320913,
-	320912,320911,320910,320909,320908,320907,320906,320905,
-	320904,321164,321165,321166,321167,320903,320902,320901,
-	321163,320900,320899,320898,320897,320896,320895,320894,
-	320893,320892,320891,320890,320889,320888,320887,320886,
-	320885,320884,320883,321226,321225,321223,321224,321221,
-	321220,321219,321218,321217,321216,321215,321214,320936,
-	320938,320934,320939,320932,320940,321213,321212,321211,
-	321210,321209,321208,321207,321206,321205,321204,321203,
-	321202,321201,321200,321199,321198,321197,321196,321195,
-	321194,321183,321181,321180,321179,321178,321177,321176,
-	321175,321174,321173,321172,320935,320937,320931,320933,
-	321288,321513,321457,321458,321459,321486,321484,321482,
-	321464,321462,321485,321483,321465,321463,321461,321512,
-	321507,321502,321514,321511,321506,321501,321497,321494,
-	321491,321488,321510,321505,321500,321496,321493,321490,
-	321487,321509,321504,321499,321515,321508,321503,321498,
-	321495,321492,321489,321460,321456,321455,321454,321453,
-	321452,321451,321450,321449,321448,321447,321446,320618,
-	--mts
-	320712,320607,320616,320608,320609,320713,320614,320617,
-	320615,320654,320610,320652,320648,320649,320650,320651,
-	320714,320635,320704,320636,320637,320715,320640,320705,
-	320641,320711,320710,320642,320706,320707,320708,320709
+			select 
+				cl.r_debt_id
+				,sum(iif(  (cl.typ = 19 and cl.dsc = 'Импортировано из Infinity (Автоинформатор)')
+					,1
+					,0
+				))ivr_vsego
 
-	)
-					and d.id = perspect.r_debt_id
-				group by
-					perspect.r_debt_id			
+				,sum(iif((cl.typ = 19 and cl.result = 733 and cl.dsc = 'Импортировано из Infinity (Автоинформатор)')
+					,1
+					,0
+				))ivr_dost
+
+				,sum(iif((cl.typ = 1 and cl.result != 0), 1, 0)) ish_zvon
+				,sum(iif(cl.typ = 3, 1, 0)) vhod_zvon
+				,sum(iif(cl.typ = 2, 1, 0)) viezdi
+				,sum(iif(cl.typ = 6, 1, 0)) pisma
+				,sum(iif(cl.typ not in (6,2,3,1,19), 1, 0)) prochee						
+			from 
+				[i_collect].[dbo].[contact_log] cl
+			where
+				cl.r_debt_id = d.id
+				and cl.dt between @d1 and @d2
+			group by 
+				cl.r_debt_id
+
+			)cl
+
+/*	debt_calc 
+	quantity and sum
+*/
+	outer apply
+			(
+			select 
+				dc.parent_id
+				,sum(dc2.PP_sum) PP_sum
+				,sum(dc2.PP_kolvo) PP_kolvo
+			from 
+				[i_collect].[dbo].[debt_calc] dc
+				left join 
+						(
+						select 
+							dc2.id as id
+							,iif( (dc2.int_sum is not null and dc2.is_confirmed = 1 and dc2.is_cancel = 0)
+								,dc2.int_sum
+								,0
+							)PP_sum
+							,iif( (dc2.int_sum is not null and dc2.is_confirmed = 1 and dc2.is_cancel = 0)
+								,1
+								,0
+							)PP_kolvo
+							
+						from 
+							[i_collect].[dbo].[debt_calc] dc2
+						group by
+							dc2.id,dc2.is_confirmed,dc2.int_sum,dc2.is_cancel
+
+						)dc2		on dc2.id=dc.id
+					
+			where 
+				dc.parent_id = d.id	
+				and dc.calc_date between @d1 and @d2									
+			group by 
+				dc.parent_id
+
+			)cc
+	
+/*	promises
+	quantity and sum
+*/
+	outer apply 
+			(
+			select 
+				dp.parent_id
+				,sum(dp2.summa_obeshaniy) as summa_obeshaniy
+				,sum(dp2.kolvo_obeshaniy) as kolvo_obeshaniy
+			from 
+				[i_collect].[dbo].[debt_promise] as dp
+				left join 
+						(
+						select 
+							dp2.id id
+							,iif(dp2.prom_sum is not null, dp2.prom_sum, 0) summa_obeshaniy
+							,iif(dp2.prom_sum is not null, 1, 0) kolvo_obeshaniy
+						from 
+							[i_collect].[dbo].[debt_promise] dp2
+						group by 
+							dp2.id,dp2.prom_sum,dp2.dt
+
+						)dp2
+							on dp2.id=dp.id
+
+			where 
+				d.id = dp.parent_id 
+				and dp.dt between @d1 and @d2
+			group by 
+				dp.parent_id
+
+			) dp
+
+/*	debt filial
+*/
+	left join	
+			(	
+			select 
+				d.code
+				,d.name
+			from 
+				i_collect.dbo.dict as d
+			where 
+				d.parent_id = 61
+			)dfil		on d.filial_new = dfil.code
+
+/*	last trash contact
+*/
+	left join
+			( 
+			select 
+				cl.r_debt_id
+				,cl.dt
+			from 
+				i_collect.dbo.contact_log as cl
+				inner join wh_data.dbo.results r on cl.result = r.cl_result_id
+			where 
+				r.contact_or_not = 0
+				and cl.id in (
+					select 
+						max(id)
+					from 
+						i_collect.dbo.contact_log
+					group by 
+						r_debt_id
+				)
+
+			)cl_musor
+				on cl_musor.r_debt_id = d.id
+
+
+/*	last perspective contact
+*/
+	left join(
+			select 
+				cl.r_debt_id
+				,cl.dt
+			from 
+				i_collect.dbo.contact_log as cl
+				inner join wh_data.dbo.results r on cl.result = r.cl_result_id
+			where 		
+				r.perspective = 1
+
+				and cl.id in(	
+					select 
+						max(id)
+					from 
+						i_collect.dbo.contact_log
+					group by
+						r_debt_id
+				)
+
+			)cl_perspective
+				on cl_perspective.r_debt_id = d.id
+
+/*	perspective contacts
+*/
+	outer apply
+			(
+			select 
+				perspect.r_debt_id
+				,count(perspect.id) as count_contacting_contacts
+				,count(case when r.perspective = 1 then perspect.id end) as	count_perspecive_contacts
+			from 
+				contact_log as perspect
+				inner join wh_data.dbo.results r on perspect.result = r.cl_result_id
+			where
+				d.id = perspect.r_debt_id
+				and r.contact_or_not = 1
+				and perspect.dt between @d1 and @d2	
+			group by
+				perspect.r_debt_id	
+						
 			)perspect
 
---where 
---	b.id in (@bank) 
---	and ( case when d.status in (6,7,8,10)	then 0	else 1	end) in (@status)
-group by
-	p.name,	d.debt_sum,c.calc_date,pr.prom_date,b.id,d.typ,la.start_date,p.sign_date,p.end_date,	d.id,
-	p.id,b.name,d_r.name,d.status,d.contract,d.account,d.agency_rate,wt.fio,wt.name,d_stat.name,d.start_sum,
-	wt.fd,libr.tip,per.f,per.i,per.o,per.id,dbl.debt_sum,dfil.name,cl_musor.dt,cl_perspective.dt,--perspect.has_perspective,
-	wt.depart,d.start_date
+/*	debt status on a given date
+*/
+	outer apply
+			(
+			select
+				di.name
+				,iif(dsl.status in (6,7,8,10), 0, 1) act
+			from
+				i_collect.dbo.debt_status_log dsl
+				left join
+						(
+						select
+							code,
+							name
+						from
+							i_collect.dbo.dict 
+						where
+							parent_id = 6
+						)di
+							on di.code = dsl.status
+			where
+				dsl.parent_id = d.id
+				and dsl.id in	
+						(
+						select
+							max(id)
+						from
+							i_collect.dbo.debt_status_log
+						where
+							dt < @d1
+						group by
+							parent_id
+						)
+			)dsl
+
+/*	Fix on given date
+*/
+	outer apply
+			(
+			select
+				wt.r_debt_id
+				,dep.name
+				,u.fio
+				,u.depart
+				,wt.fd
+			from 
+				[i_collect].[dbo].[work_task_log] as wt
+				left join
+						(
+						select	
+							u.id
+							,u.r_department_id
+							,u.f + ' ' + u.i + ' ' + u.o fio
+							,u.depart
+						from 
+							[i_collect].[dbo].[users] u
+
+						)u
+							on wt.r_user_id = u.id
+
+				left join
+						(
+						select 
+							dep.dep
+							,dep.name
+						from 
+							[i_collect].[dbo].[department] dep
+						
+						)dep
+							on u.r_department_id = dep.dep		
+									
+			where
+				wt.r_debt_id = d.id
+				and wt.id in 
+						(
+						select 
+							max(id)
+						from 
+							[i_collect].[dbo].[work_task_log]
+						where
+							fd < @d1
+						group by 
+							r_debt_id						
+						)
+
+			)fix_wt
+
+/*	portfolio on given date
+*/
+	outer apply
+			(
+			select
+				p.name
+				,replace(isnull(cast(dpl.dt as date), ''), '1900-01-01', '') dt
+			from
+				i_collect.dbo.debt_portfolio_log dpl
+				left join i_collect.dbo.portfolio p on dpl.r_portfolio_id = p.id
+			where
+				dpl.parent_id = d.id
+				and dpl.id in
+						(
+						select
+							max(id)
+						from
+							i_collect.dbo.debt_portfolio_log
+						where
+							dt < @d1
+						group by
+							parent_id
+						)
+			)dpl
+
+
+GROUP BY
+	p.name,	d.debt_sum,c.calc_date,pr.prom_date
+	,b.id,d.typ,la.start_date,p.sign_date,p.end_date
+	,d.id,p.id,b.name,d_r.name,d.status,d.contract
+	,d.account,d.agency_rate,wt.fio,wt.name,d_stat.name
+	,d.start_sum,wt.fd,per.fio, per.id,dbl.debt_sum
+	,dfil.name,cl_musor.dt,cl_perspective.dt,wt.depart
+	,d.start_date,tp.name,dsl.name, dsl.act,fix_wt.fio
+	, fix_wt.fd, fix_wt.name, fix_wt.depart,dpl.dt,dpl.name
